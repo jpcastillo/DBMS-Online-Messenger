@@ -184,3 +184,22 @@ return retVal;
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc for retrieving chat members.
+--	input: chat_id,
+--	returns empty string on success. else error message.
+--
+create language plpgsql;
+create or replace function newAccount() returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+--
+
+return retVal;
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------

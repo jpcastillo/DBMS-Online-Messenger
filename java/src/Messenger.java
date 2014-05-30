@@ -22,6 +22,9 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import java.lang.String;
+import java.util.Formatter;
+
 /**
  * This class defines a simple embedded SQL utility class that is designed to
  * work with PostgreSQL JDBC drivers.
@@ -73,7 +76,7 @@ public class Messenger {
     */
    public void executeUpdate (String sql) throws SQLException {
       // creates a statement object
-      Statement stmt = this._connection.createStatement ();
+      Statement stmt = this._connection.createStatement();
 
       // issues the update instruction
       stmt.executeUpdate (sql);
@@ -142,7 +145,7 @@ public class Messenger {
 
        int rowCount = 0;
 
-       // iterates through the result set and count nuber of results.
+       // iterates through the result set and count number of results.
        if(rs.next()){
           rowCount++;
        }//end while
@@ -150,6 +153,28 @@ public class Messenger {
        return rowCount;
    }
 
+
+   public String executeQueryStr (String query) throws SQLException {
+       // creates a statement object
+       Statement stmt = this._connection.createStatement ();
+
+       // issues the query instruction
+       ResultSet rs = stmt.executeQuery (query);
+       rs.next();
+
+       //stmt.close();
+       String retVal = rs.getString("retVal");
+       stmt.close();
+       return retVal;
+       //int rowCount = 0;
+
+       // iterates through the result set and count number of results.
+       //if(rs.next()){
+       //   rowCount++;
+       //}//end while
+       //stmt.close ();
+       //return rowCount;
+   }
    /**
     * Method to fetch the last value from sequence. This
     * method issues the query to the DBMS and returns the current 
@@ -222,7 +247,8 @@ public class Messenger {
             String authorisedUser = null;
             switch (readChoice()){
                case 1: CreateUser(esql); break;
-               case 2: authorisedUser = LogIn(esql); break;
+               case 2: authorisedUser = LogIn(esql,"Torcherist3","jc77912"); break;
+               //case 2: authorisedUser = LogIn(esql); break;
                case 9: keepon = false; break;
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
@@ -323,7 +349,29 @@ public class Messenger {
     * Check log in credentials for an existing user
     * @return User login or null is the user does not exist
     **/
-   public static String LogIn(Messenger esql){
+   public static String LogIn(Messenger esql, String un, String pw) {
+      try{
+         //System.out.print("\tEnter user login: ");
+         //String login = in.readLine();
+         //System.out.print("\tEnter user password: ");
+         //String password = in.readLine();
+
+         //String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'", un, pw);
+         String query = String.format("select login('%s','%s') as retVal;", un, pw);
+         //int userNum = esql.executeQuery(query);
+         String retVal = esql.executeQueryStr(query);
+         System.out.println("retVal: "+retVal);
+         return retVal;
+         //return "";
+   //if (userNum > 0)
+    //return un;
+         //return null;
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+         return null;
+      }
+   }//end
+   /*public static String LogIn(Messenger esql){
       try{
          System.out.print("\tEnter user login: ");
          String login = in.readLine();
@@ -339,7 +387,7 @@ public class Messenger {
          System.err.println (e.getMessage ());
          return null;
       }
-   }//end
+   }//end*/
 
    public static void AddToContact(Messenger esql){
       // Your code goes here.
