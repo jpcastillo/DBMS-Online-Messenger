@@ -242,7 +242,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 	
@@ -260,7 +261,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 
@@ -274,7 +276,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 
@@ -306,7 +309,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 
@@ -320,7 +324,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 
@@ -345,10 +350,16 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end
 
+	/*
+		Returns a String array of messages for a given chat, sorted by msg_timestamp asc
+		Returns null on failure
+		Input: chatID
+	*/
 	public static String[] GetChatHistory(Messenger esql, int chatID) {
 		try {
 			String query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
@@ -378,7 +389,8 @@ public class Messenger {
 		}
 		catch(Exception e) {
 			//System.err.println (e.getMessage());
-			return e.getMessage();
+			//return e.getMessage();
+			return null;
 		}
 	}//end Query6
 
