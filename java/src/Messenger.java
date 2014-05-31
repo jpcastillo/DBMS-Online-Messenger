@@ -1,4 +1,5 @@
 /*
+* By John Castillo and Daniel Pasillas
 * This Messenger Class is a Modification of:
 *
 * Template JAVA User Interface
@@ -71,7 +72,7 @@ public class Messenger {
 	* @param sql the input SQL string
 	* @throws java.sql.SQLException when update failed
 	*/
-	public void executeUpdate (String sql) throws SQLException {
+	/*public void executeUpdate (String sql) throws SQLException {
 	  // creates a statement object
 	  Statement stmt = this._connection.createStatement();
 
@@ -80,7 +81,7 @@ public class Messenger {
 
 	  // close the instruction
 	  stmt.close ();
-	}//end executeUpdate
+	}//end executeUpdate*/
 
 	/**
 	* Method to execute an input query SQL instruction (i.e. SELECT).  This
@@ -99,7 +100,7 @@ public class Messenger {
 	  ResultSet rs = stmt.executeQuery (query);
 
 	  /*
-	   ** obtains the metadata object for the returned result set.  The metadata
+	   ** obtains the metadata object for the returned result set. The metadata
 	   ** contains row and column info.
 	   */
 	  ResultSetMetaData rsmd = rs.getMetaData ();
@@ -124,31 +125,6 @@ public class Messenger {
 	  stmt.close ();
 	  return rowCount;
 	}//end executeQuery
-
-	/**
-	* Method to execute an input query SQL instruction (i.e. SELECT).  This
-	* method issues the query to the DBMS and returns the number of results
-	*
-	* @param query the input query string
-	* @return the number of rows returned
-	* @throws java.sql.SQLException when failed to execute the query
-	*/
-	public int executeQuery (String query) throws SQLException {
-	   // creates a statement object
-	   Statement stmt = this._connection.createStatement ();
-
-	   // issues the query instruction
-	   ResultSet rs = stmt.executeQuery (query);
-
-	   int rowCount = 0;
-
-	   // iterates through the result set and count number of results.
-	   if(rs.next()){
-		  rowCount++;
-	   }//end while
-	   stmt.close ();
-	   return rowCount;
-	}
 
 	/*
 		Method to return as an Array the results of a query.
@@ -205,14 +181,14 @@ public class Messenger {
 	* @return current value of a sequence
 	* @throws java.sql.SQLException when failed to execute the query
 	*/
-	public int getNextSeqVal(String sequence) throws SQLException {
+	/*public int getNextSeqVal(String sequence) throws SQLException {
 		Statement stmt = this._connection.createStatement ();
 		
 		ResultSet rs = stmt.executeQuery (String.format("Select nextval('%s')", sequence));
 		if (rs.next())
 			return rs.getInt(1);
 		return -1;
-	}
+	}*/
 
 	/**
 	* Method to close the physical connection if it is open.
@@ -363,7 +339,7 @@ public class Messenger {
 	public static String[] GetChatHistory(Messenger esql, int chatID) {
 		try {
 			String query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
-			String column_names = "msg_id,msg_text,msg_timestamp,sender_login";
+			String column_names = "msg_id,sender_login,msg_timestamp,msg_text";
 			String[] results = esql.executeQueryArray(query,column_names);
 			return results;
 		}
@@ -392,6 +368,6 @@ public class Messenger {
 			//return e.getMessage();
 			return null;
 		}
-	}//end Query6
+	}//end
 
 }//end Messenger
