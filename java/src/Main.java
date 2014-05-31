@@ -2,7 +2,7 @@
 	Main Class is a driver class of Messenger
 	implementation
 */
-	
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -93,7 +93,7 @@ public class Main extends Messenger {
 				switch (readChoice()){
 				   case 1: esql.AddToContact(esql); break;
 				   case 2: esql.ListContacts(esql); break;
-				   case 3: esql.NewMessage(esql); break;
+				   case 3: esql.NewMessage(esql,"Hello World!","2014-05-31 02:34:49","Torcherist3",0,""); break;
 				   case 4: esql.ReadNotifications(esql); break;
 				   case 9: usermenu = false; break;
 				   default : System.out.println("Unrecognized choice!"); break;

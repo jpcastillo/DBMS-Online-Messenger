@@ -234,3 +234,89 @@ end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
 
+/*
+CREATE TABLE MESSAGE(
+	msg_id serial, 
+	msg_text char(300) NOT NULL, 
+	msg_timestamp timestamp NOT NULL,
+	destr_timestamp timestamp, 
+	sender_login char(50),
+	chat_id integer,
+	PRIMARY KEY(msg_id), 
+	FOREIGN KEY(sender_login) REFERENCES USR(login),
+	FOREIGN KEY(chat_id) REFERENCES CHAT(chat_id));
+
+CREATE TABLE NOTIFICATION(
+	usr_login char(50), 
+	msg_id integer,
+	PRIMARY KEY(usr_login,msg_id),
+	FOREIGN KEY(usr_login) REFERENCES USR(login),
+	FOREIGN KEY(msg_id) REFERENCES MESSAGE(msg_id));
+*/
+
+--
+--	proc for sending a new message to a chat.
+--	this proc must also create a notification for appropriate recipients
+--	input: msg_text, destr_timestamp, sender_login, chat_id
+--	returns empty string on success. else error string.
+--
+-- TimeStamp with TimeZone> 1981-03-01 15:55:10 -0800 
+-- YYYY-MM-DD HH:MI:SS
+-- select newMessage('Hello world!','2014-05-31 02:34:49','Torcherist3',0,'Norma') as ret;
+create language plpgsql;
+create or replace function newMessage(v_MsgText char(300),v_DestrTimeStr char(19),v_SenderLogin char(50),v_ChatId integer,v_RecipientLogin char(50)) returns text as $$
+declare
+	retVal text := '';
+	cleanDestrStr text := '';
+	fDestrTimeStr timestamp;
+	num_rows integer := 0;
+	newChatId integer := -1;
+	newMsgId integer := -1;
+begin
+
+cleanDestrStr := regexp_replace(v_DestrTimeStr, '^[0-9]{4}(-)[0-9]{2}(-)[0-9]{2}( )[0-9]{2}(:)[0-9]{2}(:)[0-9]{2}$', '', 'g');
+if length(cleanDestrStr) != 0 then
+	return 'Error: Invalid self-destruction time';
+end if;
+
+fDestrTimeStr := to_timestamp(v_DestrTimeStr, 'YYYY-MM-DD HH:MI:SS');
+
+select into num_rows count(*) from usr where lower(login) = lower(v_SenderLogin);
+if num_rows = 0 then
+	return 'Error: Invalid sender login.';
+end if;
+
+if v_ChatId < 0 then
+	-- New Chat
+	select into num_rows count(*) from usr where lower(login) = lower(v_RecipientLogin);
+	if num_rows = 0 then
+	return 'Error: Invalid recipient login.';
+	end if;
+	-- create new chat
+	insert into chat (chat_type,init_sender) values ('private',v_SenderLogin);
+	-- save new chat_id
+	newChatId := currval('chat_chat_id_seq');
+	-- add sender and recipient to new chat
+	insert into chat_list (chat_id,member) values (newChatId,v_SenderLogin);
+	insert into chat_list (chat_id,member) values (newChatId,v_RecipientLogin);
+else
+	select into num_rows count(*) from chat_list where chat_id = v_ChatId and member = v_SenderLogin;
+	if num_rows = 0 then
+	return 'Error: Sender is not a member of the chat.';
+	end if;
+	-- Existing Chat
+	newChatId := v_ChatId;
+end if;
+-- add new message to system with the new chat_id
+insert into message (msg_text,msg_timestamp,destr_timestamp,sender_login,chat_id) values (v_MsgText,now(),fDestrTimeStr,v_SenderLogin,newChatId);
+-- save the new message id
+newMsgId := currval('message_msg_id_seq');
+-- must now add notifications to each user of chat (excluding sender)
+insert into notification select cl.member, newMsgId from chat_list cl where cl.chat_id = newChatId and cl.member != v_SenderLogin;
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+

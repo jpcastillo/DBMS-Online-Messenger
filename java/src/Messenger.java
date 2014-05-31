@@ -290,10 +290,29 @@ public class Messenger {
 		}
 	}//end
 
-	public static void NewMessage(Messenger esql) {
-	  // Your code goes here.
-	  // ...
-	  // ...
+	/*
+		INPUT: MessageText, SelfDestructTimeStamp, SenderLogin, ChatID, RecipientLogin
+		If ChatID < 0
+			RecipientLogin may NOT be an EmptyString
+			Function will create a new Chat and Add RecipientLogin to that Chat
+			Notifications are sent out accordingly
+		If ChatID >= 0
+			RecipientLogin may be an EmptyString
+			SenderLogin MUST already be a member of Chat
+			Notification of new message is sent to existing Chat members
+	*/
+	public static void NewMessage(Messenger esql, String msgBody, String selfDestr, String senderUn, Int chatID, String recipientUn) {
+		try {
+			String query = String.format("select newMessage('%s','%s','%s',%d,'%s') as retVal;", msgBody, selfDestr, senderUn, chatID, recipientUn);
+			String retVal = esql.executeQueryStr(query);
+			//System.out.println("retVal: "+retVal);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//System.err.println (e.getMessage());
+			return e.getMessage();
+		}
 	}//end 
 
 	public static void ReadNotifications(Messenger esql) {
