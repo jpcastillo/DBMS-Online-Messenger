@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.*;
 
 
 /**
@@ -149,12 +150,45 @@ public class Messenger {
 	   return rowCount;
 	}
 
-	public String executeQueryStr (String query) throws SQLException {
+	/*
+		Method to return as an Array the results of a query.
+		Input: query (the sql query to execute), cols (a list of attributes to include in csv element of array)
+	*/
+	public String[] executeQueryArray (String query, String attrs) throws SQLException {
+		// initialize our return list
+		List<String> ret_list = new ArrayList<String>();
+		// create a list of column names by splitting attributes string
+		List<String> cols = new ArrayList<String>(Arrays.asList(attrs.split(",")));
 		// creates a statement object
-		Statement stmt = this._connection.createStatement ();
+		Statement stmt = this._connection.createStatement();
 
 		// issues the query instruction
-		ResultSet rs = stmt.executeQuery (query);
+		ResultSet rs = stmt.executeQuery(query);
+
+		String tmp = "";
+		// iterates through the result set and build strings.
+		while(rs.next()){
+			// loop over list of columns/attributes and get the value of each
+			// we may then append these values to a csv string
+			for (String str: cols) {
+				tmp += (rs.getString(str)).trim() + ",";
+			}
+			// remove the extra comma at the end
+			tmp = tmp.substring(0,tmp.length()-1);
+			// add this csv string to our return list
+			ret_list.add(tmp);
+			tmp = "";
+		}//end while
+		stmt.close();
+		return ret_list.toArray(new String[0]);
+	}
+
+	public String executeQueryStr (String query) throws SQLException {
+		// creates a statement object
+		Statement stmt = this._connection.createStatement();
+
+		// issues the query instruction
+		ResultSet rs = stmt.executeQuery(query);
 		rs.next();
 
 		String retVal = rs.getString("retVal");
@@ -313,7 +347,20 @@ public class Messenger {
 			//System.err.println (e.getMessage());
 			return e.getMessage();
 		}
-	}//end 
+	}//end
+
+	public static String[] GetChatHistory(Messenger esql, int chatID) {
+		try {
+			String query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
+			String column_names = "msg_id,msg_text,msg_timestamp,sender_login";
+			String[] results = esql.executeQueryArray(query,column_names);
+			return results;
+		}
+		catch(SQLException e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
 
 	public static void ReadNotifications(Messenger esql) {
 	  // Your code goes here.

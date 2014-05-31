@@ -50,6 +50,7 @@ public class Main extends Messenger {
 			System.out.println("4. List User Chats");
 			System.out.println("5. Delete User Account");
 			System.out.println("6. Log out");
+			System.out.println("7. Get Chat History");
 			System.out.println("9. < EXIT");
 			String authorisedUser = null;
 			switch (readChoice()){
@@ -71,6 +72,10 @@ public class Main extends Messenger {
 				break;
 				case 6:
 					System.out.println(Logout(esql,"Karianne2"));
+				break;
+				case 7:
+					String[] res = GetChatHistory(esql,0);
+					System.out.println("Size: "+res.length);
 				break;
 				case 9:
 					keepon = false;
