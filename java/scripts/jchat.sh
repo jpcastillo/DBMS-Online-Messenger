@@ -58,8 +58,8 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 
 # Compile
-javac -d $DIR/../classes $DIR/../src/Messenger.java;
+javac -d $DIR/../classes $DIR/../src/Main.java $DIR/../src/Messenger.java;
 
 # Run
-java -cp $DIR/../classes:$DIR/../lib/pg73jdbc3.jar Messenger "$dbname" "$dbport" "$user" "$passwd";
+java -cp $DIR/../classes:$DIR/../lib/pg73jdbc3.jar Main "$dbname" "$dbport" "$user" "$passwd";
 

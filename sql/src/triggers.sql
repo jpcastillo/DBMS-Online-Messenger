@@ -188,18 +188,49 @@ $$ language plpgsql volatile;
 --
 --	proc for retrieving chat members.
 --	input: chat_id,
---	returns empty string on success. else error message.
+--	returns list of login (comma delimited string) on success.
+--	else empty string.
 --
 create language plpgsql;
-create or replace function newAccount() returns text as $$
+create or replace function chatListMembers(v_ChatId integer) returns text as $$
 declare
 	retVal text := '';
-	num_rows integer := 0;
 begin
 
---
-
+select into retVal array_to_string( array( select btrim(member) from chat_list where chat_id = v_ChatId ), ',');
 return retVal;
+
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc for retrieving list of chats a user is a part of.
+--	input: login
+--	returns list of chats that login is a member of (comma delimited string) on success.
+--	else empty string.
+--
+create language plpgsql;
+create or replace function userChatList(v_Login char(50)) returns text as $$
+declare
+	retVal text := '';
+begin
+
+--	must return the chat_type and chat_id
+--	first: subquery, concatenate chat_id and chat_type into csv format
+--	second: create an array of the returned results
+--	third: change that array into a vbar delimited list
+--	fourth: return this string
+select into retVal array_to_string( array( 
+	select cl.chat_id || ',' || c.chat_type as val1 
+	from chat_list cl
+	join chat c on cl.chat_id = c.chat_id
+	where cl.member = v_Login 
+	), '|' );
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
