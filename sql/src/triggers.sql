@@ -322,16 +322,82 @@ $$ language plpgsql volatile;
 
 --
 --	proc for adding user B to user A's contact/block list.
---	input: chat_id, control
+--	input: LoginA, LoginB, Control
 --	returns empty string on success. else error string.
 create language plpgsql;
-create or replace function addToContactBlock(v_ChatId integer, v_Control integer) returns text as $$
+create or replace function addToContactBlock(v_LoginA char(50), v_LoginB char(50), v_Control integer) returns text as $$
 declare
 	retVal text := '';
 	num_rows integer := 0;
+	bl_id integer := -1;
+	cl_id integer := -1;
 begin
 
+select into bl_id,cl_id block_list,contact_list from usr where lower(login) = lower(v_LoginA);
+if bl_id is null or cl_id is null then
+	return 'Error: Invalid subject login.';
+end if;
+
+select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
+if num_rows = 0 then
+	return 'Error: Invalid target login.';
+end if;
+
+
+if v_Control > 0 then
+-- contact list
+	select into num_rows count(*) from user_list_contains where list_id = cl_id and lower(list_member) = lower(v_LoginB);
+	if num_rows = 0 then
+	insert into user_list_contains values (cl_id,v_LoginB);
+	else
+	return 'Error: Target user already exists in that list.';
+end if;
+else
+-- block list
+	select into num_rows count(*) from user_list_contains where list_id = bl_id and lower(list_member) = lower(v_LoginB);
+	if num_rows = 0 then
+	insert into user_list_contains values (bl_id,v_LoginB);
+	else
+	return 'Error: Target user already exists in that list.';
+	end if;
+end if;
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
 --
+--	proc for removing user B from user A's contact/block list.
+--	input: LoginA, LoginB, Control
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function delFromContactBlock(v_LoginA char(50), v_LoginB char(50), v_Control integer) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+	bl_id integer := -1;
+	cl_id integer := -1;
+begin
+
+select into bl_id,cl_id block_list,contact_list from usr where lower(login) = lower(v_LoginA);
+if bl_id is null or cl_id is null then
+	return 'Error: Invalid subject login (A).';
+end if;
+
+select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
+if num_rows = 0 then
+	return 'Error: Invalid target login (B).';
+end if;
+
+if v_Control > 0 then
+	-- contact list
+	delete from user_list_contains where list_id = cl_id and lower(list_member) = lower(v_LoginB);
+else
+	-- block list
+	delete from user_list_contains where list_id = bl_id and lower(list_member) = lower(v_LoginB);
+end if;
 
 return retVal;
 

@@ -61,5 +61,5 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 javac -d $DIR/../classes $DIR/../src/Main.java $DIR/../src/Messenger.java;
 
 # Run
+# Note to self, cp stands for classpath and it is a colon delimited list of directories
 java -cp $DIR/../classes:$DIR/../lib/pg73jdbc3.jar Main "$dbname" "$dbport" "$user" "$passwd";
-

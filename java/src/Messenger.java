@@ -233,16 +233,36 @@ public class Messenger {
 		}
 	}//end
 
-	public static void AddToContact(Messenger esql) {
-	  // Your code goes here.
-	  // ...
-	  // ...
+	/*
+		Add userB to userA's Contact List
+	*/
+	public static String AddToContact(Messenger esql, String userA, String userB) {
+		try {
+			String query = String.format("select addToContactBlock('%s','%s',1) as retVal;", userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
 	}//end
 
-	public static void AddToBlock(Messenger esql) {
-	  // Your code goes here.
-	  // ...
-	  // ...
+	/*
+		Add userB to userA's Block List
+	*/
+	public static String AddToBlock(Messenger esql, String userA, String userB) {
+		try {
+			String query = String.format("select addToContactBlock('%s','%s',0) as retVal;", userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
 	}//end
 
 	public static void ListContacts(Messenger esql) {
