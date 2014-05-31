@@ -1,5 +1,8 @@
 *.class
 
+# Resultant backups of Git merges
+*.orig
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
