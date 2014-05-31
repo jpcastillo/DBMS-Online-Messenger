@@ -319,3 +319,22 @@ return retVal;
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc for adding user B to user A's contact/block list.
+--	input: chat_id, control
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function addToContactBlock(v_ChatId integer, v_Control integer) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+--
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------

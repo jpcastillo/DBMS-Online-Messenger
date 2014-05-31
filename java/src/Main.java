@@ -74,7 +74,7 @@ public class Main extends Messenger {
 					System.out.println(Logout(esql,"Karianne2"));
 				break;
 				case 7:
-					String[] res = GetChatHistory(esql,0);
+					String[] res = GetChatHistory(esql,0,"");
 					System.out.println("Size: "+res.length);
 				break;
 				case 9:
