@@ -54,23 +54,23 @@ public class Main extends Messenger {
 			String authorisedUser = null;
 			switch (readChoice()){
 				case 1:
-					System.out.println(esql.CreateUser(esql,"Torcherist3","jc7791","+1(626)532-2275","Online"));
+					System.out.println(CreateUser(esql,"Torcherist3","jc7791","+1(626)532-2275","Online"));
 				break;
 				case 2:
-					authorisedUser = esql.LogIn(esql,"Torcherist3","jc77912");
+					authorisedUser = LogIn(esql,"Torcherist3","jc77912");
 					System.out.println(authorisedUser);
 				break;
 				case 3:
-					System.out.println(esql.ListChatMembers(esql,1));
+					System.out.println(ListChatMembers(esql,1));
 				break;
 				case 4:
-					System.out.println(esql.ListUserChats(esql,"Norma"));
+					System.out.println(ListUserChats(esql,"Norma"));
 				break;
 				case 5:
-					System.out.println(esql.DeleteAccount(esql,"Karianne"));
+					System.out.println(DeleteAccount(esql,"Karianne"));
 				break;
 				case 6:
-					System.out.println(esql.Logout(esql,"Karianne2"));
+					System.out.println(Logout(esql,"Karianne2"));
 				break;
 				case 9:
 					keepon = false;
@@ -91,10 +91,10 @@ public class Main extends Messenger {
 				System.out.println(".........................");
 				System.out.println("9. Log out");
 				switch (readChoice()){
-				   case 1: esql.AddToContact(esql); break;
-				   case 2: esql.ListContacts(esql); break;
-				   case 3: esql.NewMessage(esql,"Hello World!","2014-05-31 02:34:49","Torcherist3",0,""); break;
-				   case 4: esql.ReadNotifications(esql); break;
+				   case 1: AddToContact(esql); break;
+				   case 2: ListContacts(esql); break;
+				   case 3: System.out.println(NewMessage(esql,"Hello World!","2014-05-31 02:34:49","Torcherist3",0,"")); break;
+				   case 4: ReadNotifications(esql); break;
 				   case 9: usermenu = false; break;
 				   default : System.out.println("Unrecognized choice!"); break;
 				}

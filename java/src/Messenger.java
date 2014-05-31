@@ -301,7 +301,7 @@ public class Messenger {
 			SenderLogin MUST already be a member of Chat
 			Notification of new message is sent to existing Chat members
 	*/
-	public static void NewMessage(Messenger esql, String msgBody, String selfDestr, String senderUn, Int chatID, String recipientUn) {
+	public static String NewMessage(Messenger esql, String msgBody, String selfDestr, String senderUn, int chatID, String recipientUn) {
 		try {
 			String query = String.format("select newMessage('%s','%s','%s',%d,'%s') as retVal;", msgBody, selfDestr, senderUn, chatID, recipientUn);
 			String retVal = esql.executeQueryStr(query);
