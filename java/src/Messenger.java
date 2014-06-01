@@ -234,6 +234,40 @@ public class Messenger {
 	}//end
 
 	/*
+		Add userB to userA's Chat
+		Returns empty string on success. Else error string.
+	*/
+	public static String AddToChat(Messenger esql, int chatId, String userA, String userB) {
+		try {
+			String query = String.format("select editChatList(%d,'%s','%s',1) as retVal;",chatId,userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		Remove userB from userA's Chat
+		Returns empty string on success. Else error string.
+	*/
+	public static String RemoveFromChat(Messenger esql, int chatId, String userA, String userB) {
+		try {
+			String query = String.format("select editChatList(%d,'%s','%s',0) as retVal;",chatId,userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
 		Add userB to userA's Contact List
 	*/
 	public static String AddToContact(Messenger esql, String userA, String userB) {
@@ -265,6 +299,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Removes userB from userA's contact list.
+		Returns empty string on success. else error string.
+	*/
 	public static String DelFromContacts(Messenger esql, String userA, String userB) {
 		try {
 			String query = String.format("select delFromContactBlock('%s','%s',1) as retVal;", userA,userB);
@@ -278,6 +316,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Removes userB from userA's block list.
+		Returns empty string on success. else error string.
+	*/
 	public static String DelFromBlocks(Messenger esql, String userA, String userB) {
 		try {
 			String query = String.format("select delFromContactBlock('%s','%s',0) as retVal;", userA,userB);
@@ -291,6 +333,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Returns a comma delimited list of contact list members
+		for the specified user.
+	*/
 	public static String ListContacts(Messenger esql, String un) {
 		try {
 			String query = String.format("select listContactBlock('%s',%d) as retVal;", un, 1);
@@ -304,6 +350,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Returns a comma delimited list of block list members
+		for the specified user.
+	*/
 	public static String ListBlocks(Messenger esql, String un) {
 		try {
 			String query = String.format("select listContactBlock('%s',%d) as retVal;", un, 0);
@@ -317,6 +367,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Returns a comma delimited list of chat members
+		for the specified chat id.
+	*/
 	public static String ListChatMembers(Messenger esql, int chatID) {
 		try {
 			String query = String.format("select chatListMembers(%d) as retVal;", chatID);
@@ -330,6 +384,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Returns a comma delimited list of chat ids
+		for the specified user.
+	*/
 	public static String ListUserChats(Messenger esql, String un) {
 		try {
 			String query = String.format("select userChatList('%s') as retVal;", un);
@@ -428,6 +486,12 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Deletes user account and all associations.
+		Per the project specifications, cannot delete account if
+		the user is owner of chats or attachments.
+		Returns empty string on success and error string on failure.
+	*/
 	public static String DeleteAccount(Messenger esql, String un) {
 		try {
 			String query = String.format("select deleteAccount('%s') as retVal;", un);

@@ -62,7 +62,7 @@ public class Main extends Messenger {
 					System.out.println(authorisedUser);
 				break;
 				case 3:
-					System.out.println(ListChatMembers(esql,1));
+					System.out.println(ListChatMembers(esql,3929));
 				break;
 				case 4:
 					System.out.println(ListUserChats(esql,"Norma"));
@@ -74,7 +74,7 @@ public class Main extends Messenger {
 					System.out.println(Logout(esql,"Karianne2"));
 				break;
 				case 7:
-					String[] res = GetChatHistory(esql,0,"");
+					String[] res = GetChatHistory(esql,3929,"");
 					System.out.println("Size: "+res.length);
 				break;
 				case 9:
@@ -98,6 +98,8 @@ public class Main extends Messenger {
 				System.out.println("7. Remove from block list");
 				System.out.println("8. Show block list");
 				System.out.println("10. Show contact list");
+				System.out.println("11. Add to chat");
+				System.out.println("12. Remove from chat");
 				System.out.println(".........................");
 				System.out.println("9. Log out");
 				switch (readChoice()){
@@ -110,6 +112,8 @@ public class Main extends Messenger {
 				   case 7: System.out.println(DelFromBlocks(esql,"Torcherist3","Torcherist5")); break;
 				   case 8: System.out.println(ListContacts(esql,"Norma")); break;
 				   case 10: System.out.println(ListBlocks(esql,"Norma")); break;
+				   case 11: System.out.println(AddToChat(esql,3929,"Norma","Torcherist5")); break;
+				   case 12: System.out.println(RemoveFromChat(esql,3929,"Norma","Torcherist5")); break;
 				   case 9: usermenu = false; break;
 				   default : System.out.println("Unrecognized choice!"); break;
 				}

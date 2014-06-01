@@ -517,3 +517,48 @@ return retVal;
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc for managing members of chat
+--	input: chat_id, loginA, loginB, control (0 is remove, 1 is add)
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function editChatList(v_ChatID integer, v_LoginA char(50), v_LoginB char(50), v_Control integer) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+select into num_rows count(*) from chat where lower(init_sender) = lower(v_LoginA) and chat_id = v_ChatID;
+
+if num_rows = 0 then
+	return 'Error: User needs to be owner of chat.';
+end if;
+
+select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
+
+if num_rows = 0 then
+	return 'Error: Invalid login.';
+end if;
+
+if v_Control > 0 then
+-- add to chat
+	-- first check if LoginB is already in chat or not.
+	select into num_rows count(*) from chat_list where lower(member) = lower(v_LoginB) and chat_id = v_ChatID;
+
+	if num_rows > 0 then
+		return 'Error: User is already in chat.';
+	end if;
+
+	-- LoginB is not in chat, let's add them.
+	insert into chat_list values (v_ChatID, v_LoginB);
+else
+-- remove from chat
+	delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginB);
+end if;
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
