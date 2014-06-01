@@ -222,11 +222,11 @@ begin
 --	third: change that array into a vbar delimited list
 --	fourth: return this string
 select into retVal array_to_string( array( 
-	select cl.chat_id || ',' || c.chat_type as val1 
+	select cl.chat_id || '\\n' || c.chat_type as val1 
 	from chat_list cl
 	join chat c on cl.chat_id = c.chat_id
 	where cl.member = v_Login 
-	), '|' );
+	), '|[(^#^)]|' );
 
 return retVal;
 
@@ -399,6 +399,80 @@ else
 	delete from user_list_contains where list_id = bl_id and lower(list_member) = lower(v_LoginB);
 end if;
 
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
+--
+--	proc for reading notifications for user
+--	input: login
+--	returns string list of notificatoins on success. else error string.
+--	msg_id\nchat_id\nsender_login\nmsg_timestamp [|[(^#^)]| ...]
+create language plpgsql;
+create or replace function readNotifications(v_Login char(50)) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+select into num_rows count(*) from usr where lower(login) = lower(v_Login);
+if num_rows = 0 then
+	return 'Error: Invalid login.';
+end if;
+
+select into retVal array_to_string (
+	array (
+	select m.msg_id || '\\n' || m.chat_id || '\\n' || m.sender_login || '\\n' || msg_timestamp
+	from notification n 
+	join message m on n.msg_id = m.msg_id 
+	where lower(n.usr_login) = lower(v_Login)
+	),
+'|[(^#^)]|');
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
+--
+--	proc for marking notifications as read
+--	input: login, chat_id
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function markReadNotifications(v_Login char(50), v_MsgId text) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+	num_chat_id integer := 0;
+	tmp integer := 0;
+	chat_str text := '';
+	cur_str text := '';
+begin
+
+select into num_rows count(*) from usr where lower(login) = lower(v_Login);
+if num_rows = 0 then
+	return 'Error: Invalid login.';
+end if;
+
+num_chat_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
+
+--retVal := v_Login;
+
+chat_str := v_MsgId;
+for i in 1..num_chat_id loop
+	select into tmp position(',' in chat_str);
+	cur_str := substring(chat_str from 0 for tmp);
+	chat_str := substring(chat_str from tmp+1 for length(chat_str)-tmp);
+	--retVal := retVal || ' ' || cur_str;-- || ':' || chat_str || ':' || to_char(tmp,'FM999MI');
+	delete from notification where lower(usr_login) = lower(v_Login) and msg_id = cur_str;
+end loop;
+	cur_str := chat_str;--substring(chat_str from 0 for tmp);
+	--chat_str := substring(chat_str from tmp+1 for length(chat_str)-tmp);
+	--retVal := retVal || ' ' || cur_str;-- || ':' || to_char(tmp,'FM999MI');
+	delete from notification where lower(usr_login) = lower(v_Login) and msg_id = cur_str;
 return retVal;
 
 end;

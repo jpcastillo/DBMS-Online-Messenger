@@ -265,10 +265,44 @@ public class Messenger {
 		}
 	}//end
 
-	public static void ListContacts(Messenger esql) {
+	public static String DelFromContacts(Messenger esql, String userA, String userB) {
+		try {
+			String query = String.format("select delFromContactBlock('%s','%s',1) as retVal;", userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	public static String DelFromBlocks(Messenger esql, String userA, String userB) {
+		try {
+			String query = String.format("select delFromContactBlock('%s','%s',0) as retVal;", userA,userB);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	public static String ListContacts(Messenger esql, String un) {
 	  // Your code goes here.
 	  // ...
 	  // ...
+		return "";
+	}//end
+
+	public static String ListBlocks(Messenger esql, String un) {
+	  // Your code goes here.
+	  // ...
+	  // ...
+		return "";
 	}//end
 
 	public static String ListChatMembers(Messenger esql, int chatID) {
@@ -347,10 +381,39 @@ public class Messenger {
 		}
 	}//end
 
-	public static void ReadNotifications(Messenger esql) {
-	  // Your code goes here.
-	  // ...
-	  // ...
+	/*
+		Returns string of notifications for user 'un'
+		Error string if error
+		msg_id\nchat_id\nsender_login\nmsg_timestamp [|[(^#^)]| ...]
+	*/
+	public static String ReadNotifications(Messenger esql, String un) {
+		try {
+			String query = String.format("select readNotifications('%s') as retVal;", un);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		Removes messages listed in msgIdList from user 'un' notificatoins
+		Returns Empty String on Success and Error string else
+	*/
+	public static String MarkReadNotifications(Messenger esql, String un, String msgIdList) {
+		try {
+			String query = String.format("select markReadNotifications('%s','%s') as retVal;", un, msgIdList);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
 	}//end
 
 	public static String DeleteAccount(Messenger esql, String un) {

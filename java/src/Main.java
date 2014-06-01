@@ -94,18 +94,18 @@ public class Main extends Messenger {
 				System.out.println("3. Write a new message");
 				System.out.println("4. Read notification list");
 				System.out.println("5. Add to block list");
-				//System.out.println("6. Remove from contact list");
-				//System.out.println("7. Remove from block list");
+				System.out.println("6. Remove from contact list");
+				System.out.println("7. Remove from block list");
 				System.out.println(".........................");
 				System.out.println("9. Log out");
 				switch (readChoice()){
 				   case 1: System.out.println(AddToContact(esql,"Torcherist3","Torcherist5")); break;
-				   case 2: ListContacts(esql); break;
+				   case 2: ListContacts(esql,"Norma"); break;
 				   case 3: System.out.println(NewMessage(esql,"Hello World!","2014-05-31 02:34:49","Torcherist3",0,"")); break;
-				   case 4: ReadNotifications(esql); break;
+				   case 4: System.out.println(ReadNotifications(esql,"Norma")); break;
 				   case 5: System.out.println(AddToBlock(esql,"Torcherist3","Torcherist5")); break;
-				   //case 6: System.out.println(removeFromContact(esql,"Torcherist3","Torcherist5")); break;
-				   //case 7: System.out.println(removeFromBlock(esql,"Torcherist3","Torcherist5")); break;
+				   case 6: System.out.println(DelFromContacts(esql,"Torcherist3","Torcherist9")); break;
+				   case 7: System.out.println(DelFromBlocks(esql,"Torcherist3","Torcherist5")); break;
 				   case 9: usermenu = false; break;
 				   default : System.out.println("Unrecognized choice!"); break;
 				}
