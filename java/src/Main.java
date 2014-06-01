@@ -96,6 +96,8 @@ public class Main extends Messenger {
 				System.out.println("5. Add to block list");
 				System.out.println("6. Remove from contact list");
 				System.out.println("7. Remove from block list");
+				System.out.println("8. Show block list");
+				System.out.println("10. Show contact list");
 				System.out.println(".........................");
 				System.out.println("9. Log out");
 				switch (readChoice()){
@@ -106,6 +108,8 @@ public class Main extends Messenger {
 				   case 5: System.out.println(AddToBlock(esql,"Torcherist3","Torcherist5")); break;
 				   case 6: System.out.println(DelFromContacts(esql,"Torcherist3","Torcherist9")); break;
 				   case 7: System.out.println(DelFromBlocks(esql,"Torcherist3","Torcherist5")); break;
+				   case 8: System.out.println(ListContacts(esql,"Norma")); break;
+				   case 10: System.out.println(ListBlocks(esql,"Norma")); break;
 				   case 9: usermenu = false; break;
 				   default : System.out.println("Unrecognized choice!"); break;
 				}

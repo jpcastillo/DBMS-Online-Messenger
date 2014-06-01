@@ -292,17 +292,29 @@ public class Messenger {
 	}//end
 
 	public static String ListContacts(Messenger esql, String un) {
-	  // Your code goes here.
-	  // ...
-	  // ...
-		return "";
+		try {
+			String query = String.format("select listContactBlock('%s',%d) as retVal;", un, 1);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
 	}//end
 
 	public static String ListBlocks(Messenger esql, String un) {
-	  // Your code goes here.
-	  // ...
-	  // ...
-		return "";
+		try {
+			String query = String.format("select listContactBlock('%s',%d) as retVal;", un, 0);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
 	}//end
 
 	public static String ListChatMembers(Messenger esql, int chatID) {

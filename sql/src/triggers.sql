@@ -452,14 +452,16 @@ declare
 	cur_str text := '';
 begin
 
+if length(v_MsgId) = 0 then
+	return 'Error: Invalid message id, empty.';
+end if;
+
 select into num_rows count(*) from usr where lower(login) = lower(v_Login);
 if num_rows = 0 then
 	return 'Error: Invalid login.';
 end if;
 
 num_chat_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
-
---retVal := v_Login;
 
 chat_str := v_MsgId;
 for i in 1..num_chat_id loop
@@ -473,6 +475,43 @@ end loop;
 	--chat_str := substring(chat_str from tmp+1 for length(chat_str)-tmp);
 	--retVal := retVal || ' ' || cur_str;-- || ':' || to_char(tmp,'FM999MI');
 	delete from notification where lower(usr_login) = lower(v_Login) and msg_id = cur_str;
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
+--
+--	proc for listing members of contact list
+--	input: login, control (0 is block, 1 is contact list)
+--	returns login list string on success. else error string.
+create language plpgsql;
+create or replace function listContactBlock(v_Login char(50), v_Control integer) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+	bl_id integer := 0;
+	cl_id integer := 0;
+	l_id integer := 0;
+begin
+
+select into bl_id,cl_id block_list,contact_list from usr where lower(login) = lower(v_Login);
+
+if bl_id is null or cl_id is null then
+	return 'Error: Invalid login.';
+end if;
+
+
+if v_Control > 0 then
+-- contact list
+	l_id := cl_id;
+else
+-- block list
+	l_id := bl_id;
+end if;
+
+select into retVal array_to_string( array( select btrim(list_member) from user_list_contains where list_id = l_id ), ',' );
+
 return retVal;
 
 end;
