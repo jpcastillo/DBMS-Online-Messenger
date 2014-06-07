@@ -562,3 +562,102 @@ return retVal;
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc for deleting message
+--	input: login, msg_id
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function delMessage(v_Login char(50), v_MsgID integer) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+select into num_rows count(*) from message where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+if num_rows = 0 then
+	return 'Error: Invalid owner or message does not exist.';
+end if;
+
+delete from notification where msg_id = v_MsgID;
+delete from message where msg_id = v_MsgID;
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
+--
+--	proc for deleting expired message and notification
+--	NEEDS FURTHER CONSIDERATION!!!! Must continually poll this in Java!!!
+create language plpgsql;
+create or replace function selfDestruct() returns trigger as $$
+declare ts timestamp;
+begin
+	ts := now();
+	delete from notification where msg_id in (select msg_id from message where destr_timestamp < ts);
+	delete from message where destr_timestamp < ts;
+    return new;
+end;
+$$ language plpgsql;
+
+
+--drop trigger selfDestruct on message;
+--create trigger selfDestruct before insert or update or delete on message for each row execute procedure selfDestruct();
+---------------------------------------------------------------------
+
+--
+--	proc for updates a user's status
+--	input: login, status
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function updateStatus(v_Login char(50), v_Status char(140)) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+if length(v_Status) > 140 then
+	return 'Error: Status string must be less than 141 characters.';
+end if;
+
+select into num_rows count(*) from usr where lower(login) = lower(v_Login);
+
+if num_rows = 0 then
+	return 'Error: Invalid login.';
+end if;
+
+update usr set status = v_Status where lower(login) = lower(v_Login);
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
+
+--
+--	proc for deleting message
+--	input: login, msg_id
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function updateMessage(v_Login char(50), v_MsgID integer, v_MsgText char(300)) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+select into num_rows count(*) from message where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+if num_rows = 0 then
+	return 'Error: Invalid owner or message does not exist.';
+end if;
+
+update message set msg_text = v_MsgText where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------
