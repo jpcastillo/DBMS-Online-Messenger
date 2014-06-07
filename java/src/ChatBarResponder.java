@@ -25,12 +25,12 @@ class ChatBarResponder implements ActionListener, KeyListener {
                                new Command("/remove", 2, "c", "/remove <user> - removes user from contacts"),
                                new Command("/unblock", 2, "b", "/unblock <user> - removes user from blocked list"),
                                new Command("/uninvite", 2, "a", "/uninvite <user> - removes user from active chat (owner only)"),
-                               new Command("/whisper", 2, "x", "/whisper <user> - creates a new chat with you and chosen user")
+                               new Command("/whisper", 3, "x?", "/whisper <user> <message> - creates a new chat with you and chosen user")
         };
 
     public void actionPerformed(ActionEvent e) {
         JTextField source = (JTextField)e.getSource();
-        String text = source.getText();
+        String text = source.getText().trim();
         source.setText("");
         
         boolean valid = false;
@@ -38,12 +38,12 @@ class ChatBarResponder implements ActionListener, KeyListener {
         
         Messenger esql = Messenger_GUI.esql;
         
-        if(Pattern.matches("/\\p{Graph}* .*",text)) {
-            String[] command = text.trim().split(" ");
+        if(Pattern.matches("/.*",text)) {
+            String[] command = text.split(" ");
             for(Command c : commands) {
                 ++index;
                 if(c.command.equals(command[0]))
-                    if(c.argc != command.length) {
+                    if(c.argc > command.length) {
                         break;
                     } else {
                         valid = true;
@@ -56,6 +56,7 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 chatArea.systemMessage("    Type /help for list of commands");
                 return;
             }
+            command = text.split(" ",commands[index].argc);
             String ret = null;
             
             switch(index) {
@@ -69,22 +70,31 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 ret = Messenger.DeleteAccount(esql, MessengerUser.current.name);
                 break;
             case 3:
+                //delete mesage
                 break;
             case 4:
+                //edit
                 break;
             case 5:
+                help();
                 break;
-            case 6:
+            case 6://invite
+                ret = Messenger.AddToChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
-            case 7:
+            case 7://leave
+                
                 break;
-            case 8:
+            case 8://remove
+                ret = Messenger.DelFromContacts(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 9:
+            case 9://unblock
+                ret = Messenger.DelFromBlocks(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 10:
+            case 10://uninvite
+                ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
-            case 11:
+            case 11://whisper
+                ret = Messenger.NewMessage(esql, command[2], "", MessengerUser.current.name, -1, command[1]);
                 break;
             default:;
             }
@@ -104,6 +114,13 @@ class ChatBarResponder implements ActionListener, KeyListener {
         
     }
     
+    public void help() {
+        chatArea.systemMessage("Commands:");
+        for(Command c : commands)
+            chatArea.systemMessage("    " + c.desc);
+        chatArea.systemMessage("    Press [TAB] to auto-complete commands or command arguments");
+    }
+    
     public void keyPressed(KeyEvent e) {
         if(e.getKeyCode() == e.VK_TAB){
             JTextField source = (JTextField)e.getSource();
@@ -113,23 +130,38 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 source.setText(bestMatch(text,commands));
                 return;
             }
-            String[] array = text.split(" ");
-            int index = Arrays.asList(commands).indexOf(array[0]);
             
-            if(index < 0)
+            if(text.length() == 0 || Pattern.matches("^[^/].*",text)) {
+                //regular message, do nothing
+                return;
+            }
+            String[] array = text.split(" ");
+            int index = -1;
+            
+            for(Command c : commands) {
+                ++index;
+                if(c.command.equals(array[0]))
+                    break;
+            }
+            
+            //int index = Arrays.asList(commands).indexOf(array[0]);
+            
+            System.out.println("Index: " + index);
+            
+            if(index < 0 || index >= commands.length)
                 return;
             
             Command c = commands[index];
             
             array = text.split(" ", c.argc);
-            System.out.println("" + array.length);
+            //System.out.println("" + array.length);
             
-            if(array.length < c.argc)
+            if(array.length <= c.argc)
             {
                 //m - message, t - message text
                 //c - contact, a - active user
                 //x - active user or contact
-                System.out.println(c.argt.charAt(array.length-2));
+                //System.out.println(c.argt.charAt(array.length-2));
                 switch(c.argt.charAt(array.length-2))
                 {
                 case 'm':
@@ -139,6 +171,7 @@ class ChatBarResponder implements ActionListener, KeyListener {
                     source.setText(array[0] + ' ' + array[1] + ' ' + "");
                     break;
                 case 'c':
+                    System.out.println("Options: " + MessengerUser.current.contacts.length);
                     source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts));
                     break;
                 case 'a':
@@ -147,6 +180,8 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 case 'x':
                     source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts,Chat.activeChat.userNames()));
                     break;
+                case 'b':
+                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.blocked));
                 default:;
                 }
             }
@@ -189,11 +224,11 @@ class ChatBarResponder implements ActionListener, KeyListener {
     
     private static String bestMatch(String s, MessengerUser[] users, String[] list) {
         String[] array = new String[users.length + list.length];
-        for(int i = 0; i < array.length; ++i)
+        for(int i = 0; i < users.length; ++i)
             array[i] = users[i].name;
             //return bestMatch(s,array);
-        for(int i = array.length; i < array.length + list.length; ++i)
-            array[i] = list[i];
+        for(int i = users.length; i < array.length; ++i)
+            array[i] = list[i - users.length];
         return bestMatch(s,array);
     }
     
@@ -238,7 +273,7 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 matching[i++] = strings[which];
         }
         
-        System.out.println("Matches: " + count);
+        //System.out.println("Matches: " + count);
         
         if(count == 0)
             return s;
@@ -250,9 +285,8 @@ class ChatBarResponder implements ActionListener, KeyListener {
     private static String longestPrefix(String[] strings) {
         int longest = 0;
         
-        System.out.println("HERRO!");
-        for(String s : strings)
-            System.out.println(s);
+        //for(String s : strings)
+        //    System.out.println(s);
         
         if(strings.length == 0)
             return "";
@@ -262,8 +296,8 @@ class ChatBarResponder implements ActionListener, KeyListener {
         while(true) {
             curr = strings[0].charAt(longest);
             for(String s: strings) {
-                if(longest == s.length() || s.charAt(longest) != curr){
-                    System.out.println("DONE AT: " + longest);
+                if(longest >= s.length() || s.charAt(longest) != curr){
+                    //System.out.println("DONE AT: " + longest);
                     return s.substring(0,longest);
                     }
             }

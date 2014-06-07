@@ -7,26 +7,28 @@ import java.awt.Color;
 
 class ChatPane extends JTextPane {
 
-    SimpleAttributeSet system, user, message;
+    public static SimpleAttributeSet system = null, user = null, message = null;
 
     public ChatPane() {
-    super();
-    
-    system = new SimpleAttributeSet();
-    user = new SimpleAttributeSet();
-    message = new SimpleAttributeSet();
-    StyleConstants.setForeground(system, Color.GRAY);
-    StyleConstants.setForeground(user, Color.GREEN);
-    StyleConstants.setForeground(message, Color.BLACK);
-    
-    StyleConstants.setBold(user, true);
-    StyleConstants.setItalic(system, true);
-    
-    
-    //StyleConstants.setBackground(keyWord, Color.YELLOW);
-    //StyleConstants.setBold(keyWord, true);
-    
-    systemMessage("Welcome to DBMX-Online-Messenger");
+        super();
+        
+        if(system == null) {
+            system = new SimpleAttributeSet();
+            user = new SimpleAttributeSet();
+            message = new SimpleAttributeSet();
+            StyleConstants.setForeground(system, Color.GRAY);
+            StyleConstants.setForeground(user, Color.GREEN);
+            StyleConstants.setForeground(message, Color.BLACK);
+            
+            StyleConstants.setBold(user, true);
+            StyleConstants.setItalic(system, true);
+            
+            
+            //StyleConstants.setBackground(keyWord, Color.YELLOW);
+            //StyleConstants.setBold(keyWord, true);
+            
+            systemMessage("Welcome to DBMX-Online-Messenger");
+        }
     }
     
     void systemMessage(String s)

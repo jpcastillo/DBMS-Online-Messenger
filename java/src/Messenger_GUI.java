@@ -31,8 +31,12 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     JTextField loginUser, signUpUser;
     JPasswordField loginPass, signUpPass;
     
+    ChatPane chatArea;
+    
     enum ToggleButtons {LOGIN, SIGN_UP, HELP};
     EnumMap <ToggleButtons, JToggleButton> tbuttons = new EnumMap <ToggleButtons, JToggleButton>(ToggleButtons.class);
+    
+    DefaultListModel<String> usersModel, chatsModel;
 
     
     /*enum Labels {RED, BLUE, RED_S, BLUE_S, LAST};
@@ -257,7 +261,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
         
-        ChatPane chatArea = new ChatPane();
+        chatArea = new ChatPane();
         chatArea.setEditable(false);
         leftPanel.add(chatArea);
         
@@ -283,10 +287,13 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         
         
-        DefaultListModel<String> usersModel = new DefaultListModel<String>();
+        usersModel = new DefaultListModel<String>();
         usersList = new JList<String>(usersModel);
         usersList.setPreferredSize(new Dimension(1000,1618));
-        JList chatsList = new JList<String>(new DefaultListModel<String>());
+        
+        chatsModel = new DefaultListModel<String>();
+        JList chatsList = new JList<String>(chatsModel);
+        chatsList.addMouseListener(new ChatListListener());
         chatsList.setPreferredSize(new Dimension(1000,1000));
         usersModel.addElement("ONE");
         usersModel.addElement("TWO");
@@ -395,11 +402,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 loginError.setText("Unable to Connect!");
                 return;
             }
-            MessengerUser.current = new MessengerUser();
-            MessengerUser.current.name = loginUser.getText();
             
-            ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
-            ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
+            login(loginUser.getText());
         }
         else if(action.equals("sign up"))
         {
@@ -433,6 +437,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         }
         else if(action.equals("logout"))
         {
+            logout();
             //System.out.println("Logging out :3");
             //JPopupMenu menu = new JPopupMenu();
             //menu.add(new JButton("Hello :3"));
@@ -440,13 +445,29 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             //menu.add(new JButton("Hello :3"));
             //menu.add(new JButton("Hello :3"));
             
-            JButton button = (JButton)source;
+            //JButton button = (JButton)source;
             //menu.show(button, 0, button.getBounds().height);
         }
         
     }
     
+    void login(String user) {
+        MessengerUser.current = MessengerUser.getUser(user);
+        
+        startDaemons();
+        
+        ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
+        ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
+    }
     
+    void logout() {
+    
+        MessengerUser.current = null;
+        Chat.activeChat = null;
+        
+        ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(null);
+        ((CardLayout)mainPanel.getLayout()).show(mainPanel,"INIT");
+    }
 
     private static void createAndShowGUI() {
         JFrame.setDefaultLookAndFeelDecorated(true);
@@ -532,26 +553,194 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     
     private boolean shouldNotify = true;
     
-    private class NotificationManager extends SwingWorker<Void, String> {
+    private abstract class DaemonManager<T> extends SwingWorker <Void, T> {
+        T lastQuery = null;
+        int period = 1000;
+        
+        DaemonManager() {
+            super();
+        }
+        
+        DaemonManager(int period) {
+            super();
+            this.period = period;
+        }
         
         protected Void doInBackground() {
-        
-            while(shouldNotify)
-            {
-                publish(Messenger.ReadNotifications(esql, MessengerUser.current.name));
+            while(shouldNotify) {
+                T ret = doQuery();
+                if(ret != null)
+                    publish(ret);
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(period);
                 } catch (InterruptedException e) {
-                    //Cancelled!
-                break;
+                    break;
                 }
             }
             return null;
         }
         
-        protected void process(List<String> notifications) {
-            for(String s : notifications)
+        protected void process(List<T> queries) {
+            if(queries.size() == 0)
+                return;
+            
+            T query = queries.get(queries.size()-1);
+            
+            if(!query.equals(lastQuery)) {
+                processQuery(query);
+            }
+            
+            lastQuery = query;
+        }
+        
+        protected abstract T doQuery();
+        protected abstract void processQuery(T query);
+    }
+    
+    private void startDaemons() {
+        new NotificationManager(100).execute();
+        new ChatListManager(100).execute();
+        new ChatUsersManager(100).execute();
+        new ContactsManager(100).execute();
+        new BlockedManager(100).execute();
+        new ChatHistoryManager(100).execute();
+    }
+    
+    private class NotificationManager extends DaemonManager<String> {
+        public NotificationManager(int period) {super(period);}
+        public NotificationManager() {super();}
+    
+        protected String doQuery() {
+            return Messenger.ReadNotifications(esql, MessengerUser.current.name);
+        }
+        
+        protected void processQuery(String query) {
+            System.out.println(query);
+        }
+    }
+    
+    private class ChatListManager extends DaemonManager<String> {
+        public ChatListManager(int period) {super(period);}
+        public ChatListManager() {super();}
+    
+        protected String doQuery() {
+            return Messenger.ListUserChats(esql, MessengerUser.current.name);
+        }
+        
+        protected void processQuery(String query) {
+            chatsModel.clear();
+            
+            String[] chats = query.split("\\|\\[\\(\\^\\#\\^\\)\\]\\|");
+            
+            for(String chat : chats)
+                chatsModel.addElement(chat.split("\\\\n")[0]);
+        }
+    }
+    
+    private class ChatUsersManager extends DaemonManager<String> {
+        Chat lastChat = Chat.activeChat;
+    
+        public ChatUsersManager(int period) {super(period);}
+        public ChatUsersManager() {super();}
+    
+        protected String doQuery() {
+            if(lastChat != null)
+                return Messenger.ListChatMembers(esql, Chat.activeChat.cid);
+            
+            lastChat = Chat.activeChat;
+            return null;
+        }
+        
+        protected void processQuery(String query) {
+            usersModel.clear();
+            String[] users = query.split(",");
+            MessengerUser[] activeUsers = new MessengerUser[users.length];
+            
+            int index = 0;
+            for(String user : users) {
+                usersModel.addElement(user);
+                activeUsers[index++] = MessengerUser.getUser(user);
+            }
+            
+            lastChat.activeUsers = activeUsers;
+            lastChat = Chat.activeChat;    
+        }
+    }
+    
+    private class ContactsManager extends DaemonManager<String> {
+        public ContactsManager(int period) {super(period);}
+        public ContactsManager() {super();}
+    
+        protected String doQuery() {
+            return Messenger.ListContacts(esql, MessengerUser.current.name);
+        }
+        
+        protected void processQuery(String query) {
+            String[] users = query.split(",");
+            MessengerUser[] contacts = new MessengerUser[users.length];
+            
+            int index = 0;
+            for(String user : users) {
+                contacts[index++] = MessengerUser.getUser(user);
+            }
+            
+            MessengerUser.current.contacts = contacts;
+        }
+    }
+    
+    private class BlockedManager extends DaemonManager<String> {
+        public BlockedManager(int period) {super(period);}
+        public BlockedManager() {super();}
+    
+        protected String doQuery() {
+            return Messenger.ListBlocks(esql, MessengerUser.current.name);
+        }
+        
+        protected void processQuery(String query) {
+            String[] users = query.split(",");
+            MessengerUser[] blocked = new MessengerUser[users.length];
+            
+            int index = 0;
+            for(String user : users) {
+                blocked[index++] = MessengerUser.getUser(user);
+            }
+            
+            MessengerUser.current.blocked = blocked;
+        }
+    }
+    
+    private class ChatHistoryManager extends DaemonManager<String[]> {
+        Chat lastChat = Chat.activeChat;
+    
+        public ChatHistoryManager(int period) {super(period);}
+        public ChatHistoryManager() {super();}
+    
+        protected String[] doQuery() {
+            if(lastChat != null)
+                return Messenger.GetChatHistory(esql, lastChat.cid, lastChat.lastUpdate);
+                
+            lastChat = Chat.activeChat;
+            return null;
+        }
+        
+        protected void processQuery(String[] query) {
+            for(String s : query)
                 System.out.println(s);
+        }
+    }
+    
+    private class ChatListListener extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {
+            JList list = (JList)e.getSource();
+            if(e.getClickCount() == 2) {
+                int index = list.locationToIndex(e.getPoint());
+                setActiveChat(Integer.parseInt(chatsModel.get(index)));
+            }
+        }
+        
+        void setActiveChat(int cid) {
+            Chat.activeChat = Chat.getChat(cid);
+            chatArea.setStyledDocument(Chat.activeChat.doc);
         }
     }
 }
