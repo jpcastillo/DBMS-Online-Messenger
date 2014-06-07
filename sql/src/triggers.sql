@@ -590,22 +590,21 @@ $$ language plpgsql volatile;
 ---------------------------------------------------------------------
 
 --
---	proc for deleting expired message and notification
---	NEEDS FURTHER CONSIDERATION!!!! Must continually poll this in Java!!!
+--	proc for deleting expired messages
 create language plpgsql;
 create or replace function selfDestruct() returns trigger as $$
 declare ts timestamp;
 begin
 	ts := now();
-	delete from notification where msg_id in (select msg_id from message where destr_timestamp < ts);
-	delete from message where destr_timestamp < ts;
-    return new;
+	-- Messages with a self-destruction timestamp should be deleted from the system, after specified datetime and once it is read
+	delete from message where destr_timestamp < ts and msg_id not in (select msg_id from notification);
+   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql volatile;
 
-
---drop trigger selfDestruct on message;
---create trigger selfDestruct before insert or update or delete on message for each row execute procedure selfDestruct();
+-- trigger for calling selfDestruct() proc on insert and update events
+drop trigger selfDestruct on message;
+create trigger selfDestruct after insert or update on message for each row execute procedure selfDestruct();
 ---------------------------------------------------------------------
 
 --
