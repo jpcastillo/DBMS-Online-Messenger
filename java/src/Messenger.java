@@ -189,8 +189,8 @@ public class Messenger {
 	}//end cleanup
 
 	/*
-	* Creates a new user with privided login, password and phoneNum
-	* An empty block and contact list would be generated and associated with a user
+	* Creates a new user with provided login, password, phoneNum, and status
+	* returns empty string on success. else error message.
 	**/
 	public static String CreateUser(Messenger esql,String un,String pw,String phone,String status) {
 		try {
@@ -207,7 +207,7 @@ public class Messenger {
 
 	/*
 	* Check log in credentials for an existing user
-	* @return User login or null is the user does not exist
+	* Returns empty string on success, else error string.
 	**/
 	public static String LogIn(Messenger esql, String un, String pw) {
 		try {
@@ -222,6 +222,10 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Log user out.
+		Returns empty string on success. Else error string.
+	*/
 	public static String Logout(Messenger esql, String un) {
 		try {
 			String query = String.format("select logout('%s') as retVal;", un);
@@ -428,6 +432,24 @@ public class Messenger {
 	}//end
 
 	/*
+		Deletes a specified message from notification and messages if possible.
+		Input message owner (un), message id (msgId)
+		Returns empty string on success. else error string.
+	*/
+	public static String DeleteMessage(Messenger esql, String un, int msgId) {
+		try {
+			String query = String.format("select delMessage('%s',%d) as retVal;", un, msgId);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
 		Returns a String array of messages for a given chat, sorted by msg_timestamp asc
 		Returns null on failure
 		Input: chatID, fromTimeStamp (YYYY-MM-DD HH:MI:SS)
@@ -443,7 +465,7 @@ public class Messenger {
 			else {
 				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
 				query = String.format("select m.msg_id,m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = %d order by m.msg_timestamp asc;",chatID);
-				System.out.println("Q: "+query);
+				//System.out.println("Q: "+query);
 			}
 
 			String column_names = "msg_id,sender_login,msg_timestamp,msg_text,media_type,url";
@@ -460,7 +482,7 @@ public class Messenger {
 	/*
 		Returns string of notifications for user 'un'
 		Error string if error
-		msg_id\nchat_id\nsender_login\nmsg_timestamp [|[(^#^)]| ...]
+		msg_id\nchat_id\nsender_login\nmsg_timestamp [ |[(^#^)]| ... ]
 	*/
 	public static String ReadNotifications(Messenger esql, String un) {
 		try {
@@ -501,6 +523,40 @@ public class Messenger {
 	public static String DeleteAccount(Messenger esql, String un) {
 		try {
 			String query = String.format("select deleteAccount('%s') as retVal;", un);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		Updates a user's status
+		Returns empty string on success and error string on failure.
+	*/
+	public static String UpdateStatus(Messenger esql, String un, String status) {
+		try {
+			String query = String.format("select updateStatus('%s','%s') as retVal;", un, status);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		Updates a user's message
+		Returns empty string on success and error string on failure.
+	*/
+	public static String UpdateMessage(Messenger esql, String un, int msgId, String msgText) {
+		try {
+			String query = String.format("select updateMessage('%s',%d,'%s') as retVal;", un, msgId, msgText);
 			String retVal = esql.executeQueryStr(query);
 
 			return retVal;
