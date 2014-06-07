@@ -147,7 +147,9 @@ public class Messenger {
 			// loop over list of columns/attributes and get the value of each
 			// we may then append these values to a csv string
 			for (String str: cols) {
-				tmp += (rs.getString(str)).trim() + ",";
+				String tmp2 = rs.getString(str);
+				tmp2 = (tmp2==null) ? "" : tmp2;
+				tmp += tmp2.trim() + ",";
 			}
 			// remove the extra comma at the end
 			tmp = tmp.substring(0,tmp.length()-1);
@@ -202,7 +204,7 @@ public class Messenger {
 			return null;
 		}
 	}//end
-	
+
 	/*
 	* Check log in credentials for an existing user
 	* @return User login or null is the user does not exist
@@ -435,18 +437,22 @@ public class Messenger {
 		try {
 			String query;
 			if (fromTimeStamp.length() > 0) {
-				query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
+				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
+				query = String.format("select m.msg_id,m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
 			}
 			else {
-				query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
+				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
+				query = String.format("select m.msg_id,m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = %d order by m.msg_timestamp asc;",chatID);
+				System.out.println("Q: "+query);
 			}
-			
-			String column_names = "msg_id,sender_login,msg_timestamp,msg_text";
+
+			String column_names = "msg_id,sender_login,msg_timestamp,msg_text,media_type,url";
 			String[] results = esql.executeQueryArray(query,column_names);
 			return results;
 		}
 		catch(SQLException e) {
 			//return e.getMessage();
+			System.out.println("E: "+e.getMessage());
 			return null;
 		}
 	}//end
