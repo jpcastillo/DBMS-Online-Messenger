@@ -1,9 +1,12 @@
 import javax.swing.*;
 //import java.awt.*; //don't want to import java.awt.List
-import java.awt.CardLayout;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.util.*;
 import java.awt.geom.AffineTransform;
@@ -12,18 +15,25 @@ import java.text.ParseException;
 import java.util.regex.Pattern;
 import java.net.URL;
 
-public class Messenger_GUI implements  ActionListener{
+public class Messenger_GUI extends WindowAdapter implements ActionListener{
 
+    public static Messenger esql;
     // Definition of global values and items that are part of the GUI.
-    int redScoreAmount = 0;
-    int blueScoreAmount = 0;
-
-    HashMap <JComponent, Enum> lookup;
 
     enum Panels {TITLE, SCORE, BUTTON, LAST};
     EnumMap <Panels, JPanel> panels;
     JPanel rightPanel, mainPanel;
     JMenuBar menuBar;
+    JList usersList;
+    JLabel loginError, signUpError;
+    
+    JFormattedTextField phoneLine;
+    JTextField loginUser, signUpUser;
+    JPasswordField loginPass, signUpPass;
+    
+    enum ToggleButtons {LOGIN, SIGN_UP, HELP};
+    EnumMap <ToggleButtons, JToggleButton> tbuttons = new EnumMap <ToggleButtons, JToggleButton>(ToggleButtons.class);
+
     
     /*enum Labels {RED, BLUE, RED_S, BLUE_S, LAST};
     EnumMap <Labels, JLabel> labels;
@@ -32,12 +42,7 @@ public class Messenger_GUI implements  ActionListener{
     enum Buttons {RED_BUTTON, BLUE_BUTTON, RESET_BUTTON, LAST};
     EnumMap <Buttons, JButton> buttons;
     JButton redButton, blueButton, resetButton;*/
-    
-    JFormattedTextField phoneLine;
-    
-    enum ToggleButtons {LOGIN, SIGN_UP, HELP};
-    EnumMap <ToggleButtons, JToggleButton> tbuttons = new EnumMap <ToggleButtons, JToggleButton>(ToggleButtons.class);
-
+                        
     Condition emptyCondition = new Condition() {
         @Override
         public boolean condition(JTextField f){return f.getText().length() == 0;}
@@ -48,11 +53,8 @@ public class Messenger_GUI implements  ActionListener{
         public boolean condition(JTextField f){
             Object obj = ((JFormattedTextField)f).getValue();
             if( obj == null ) {
-                System.out.println("NULL!");
                 return !Pattern.matches("\\+\\d\\(\\d\\d\\d\\)\\d\\d\\d-\\d\\d\\d\\d",f.getText());
-                }
-                else
-                System.out.println((String)obj);
+            }
             boolean r = !Pattern.matches(".*\\d",(String)obj) && !Pattern.matches("\\+\\d\\(\\d\\d\\d\\)\\d\\d\\d-\\d\\d\\d\\d",f.getText());
             return r;}
     };
@@ -62,9 +64,19 @@ public class Messenger_GUI implements  ActionListener{
         loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.PAGE_AXIS));
         loginPanel.add(Box.createVerticalGlue());
         
-        
+        JPanel errorLine = new JPanel();
+        errorLine.setLayout( new BoxLayout(errorLine, BoxLayout.LINE_AXIS));
+        errorLine.add(Box.createHorizontalGlue());
+        loginError = new JLabel();
+        loginError.setForeground(Color.RED);
+        //loginPanel.add(loginError);
+        errorLine.add(loginError);
+        errorLine.add(Box.createHorizontalGlue());
+        loginPanel.add(errorLine);
         
         JTextField userLine = new JTextField(8);
+        userLine.addKeyListener(new KeyEater());
+        loginUser = userLine;
         //new GhostText(userLine, "Username", emptyCondition);
         userLine.setHorizontalAlignment(JTextField.CENTER);
         AffineTransform t = new AffineTransform();
@@ -72,8 +84,10 @@ public class Messenger_GUI implements  ActionListener{
         userLine.setFont(userLine.getFont().deriveFont(t));
         userLine.setMaximumSize(new Dimension(Short.MAX_VALUE, userLine.getPreferredSize().height));
         loginPanel.add(new JLayer<JTextField>(userLine,new GhostText(userLine, "Username", emptyCondition)));
+        errorLine.setMaximumSize(userLine.getMaximumSize());
         
-        JTextField passwordLine = new JPasswordField(8);
+        JPasswordField passwordLine = new JPasswordField(8);
+        loginPass = passwordLine;
         passwordLine.enableInputMethods(true);
         //new GhostText(passwordLine, "Password", emptyCondition);
         passwordLine.setHorizontalAlignment(JTextField.CENTER);
@@ -111,7 +125,19 @@ public class Messenger_GUI implements  ActionListener{
         signUpPanel.setLayout(new BoxLayout(signUpPanel, BoxLayout.PAGE_AXIS));
         signUpPanel.add(Box.createVerticalGlue());
         
+        JPanel errorLine = new JPanel();
+        errorLine.setLayout( new BoxLayout(errorLine, BoxLayout.LINE_AXIS));
+        errorLine.add(Box.createHorizontalGlue());
+        signUpError = new JLabel();
+        signUpError.setForeground(Color.RED);
+        //signUpPanel.add(signUpError);
+        errorLine.add(signUpError);
+        errorLine.add(Box.createHorizontalGlue());
+        signUpPanel.add(errorLine);
+        
         JTextField userLine = new JTextField(8);
+        signUpUser = userLine;
+        userLine.addKeyListener(new KeyEater());
         //new GhostText(userLine, "Username", emptyCondition);
         userLine.setHorizontalAlignment(JTextField.CENTER);
         AffineTransform t = new AffineTransform();
@@ -119,8 +145,10 @@ public class Messenger_GUI implements  ActionListener{
         userLine.setFont(userLine.getFont().deriveFont(t));
         userLine.setMaximumSize(new Dimension(Short.MAX_VALUE, userLine.getPreferredSize().height));
         signUpPanel.add(new JLayer<JTextField>(userLine,new GhostText(userLine, "Username", emptyCondition)));
+        errorLine.setMaximumSize(userLine.getMaximumSize());
         
-        JTextField passwordLine = new JPasswordField(8);
+        JPasswordField passwordLine = new JPasswordField(8);
+        signUpPass = passwordLine;
         passwordLine.enableInputMethods(true);
         passwordLine.setHorizontalAlignment(JTextField.CENTER);
         passwordLine.setFont(userLine.getFont());
@@ -221,33 +249,6 @@ public class Messenger_GUI implements  ActionListener{
         return initPanel;
     }
     
-    private static String longestSubstring(JList jlist) {
-        ListModel model = jlist.getModel();
-        if(model instanceof DefaultListModel) {
-            DefaultListModel dlm = (DefaultListModel)jlist.getModel();
-            return longestSubstring((String[])dlm.toArray());
-        }
-        return "";
-    }
-    
-    private static String longestSubstring(String[] strings) {
-        
-        int longest = 0;
-        
-        if(strings.length == 0)
-            return "";
-            
-        char curr = strings[0].charAt(0);
-        
-        while(true) {
-            for(String s: strings) {
-                if(longest == s.length() || s.charAt(longest) != curr)
-                    return s.substring(0,longest);
-            }
-            ++longest;
-        }
-    }
-    
     JPanel createChatPanel()
     {
         JPanel chatPanel = new JPanel();
@@ -256,13 +257,23 @@ public class Messenger_GUI implements  ActionListener{
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
         
-        JTextArea chatArea = new JTextArea();
+        ChatPane chatArea = new ChatPane();
         chatArea.setEditable(false);
         leftPanel.add(chatArea);
         
-        JTextField messageField = new JTextField();
-        messageField.setMaximumSize(new Dimension(Short.MAX_VALUE,chatArea.getPreferredSize().height));
-        leftPanel.add(new JLayer<JTextField>(messageField,new GhostText(messageField, "Add a message...", emptyCondition)));
+        ChatBarResponder responder = new ChatBarResponder(chatArea);
+        
+        chatArea.systemMessage("Commands:");
+        for(Command c : responder.commands)
+            chatArea.systemMessage("    " + c.desc);
+        
+        JTextField chatBar = new JTextField();
+        chatBar.setMaximumSize(new Dimension(Short.MAX_VALUE,chatArea.getPreferredSize().height));
+        chatBar.setFocusTraversalKeys( KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.EMPTY_SET );
+        
+        chatBar.addKeyListener(responder);
+        chatBar.addActionListener(responder);
+        leftPanel.add(new JLayer<JTextField>(chatBar,new GhostText(chatBar, "Add a message...", emptyCondition)));
         leftPanel.setPreferredSize(new Dimension(1618, 1000));
         chatPanel.add(leftPanel);
         chatPanel.add(new JSeparator(JSeparator.VERTICAL));
@@ -273,7 +284,7 @@ public class Messenger_GUI implements  ActionListener{
         
         
         DefaultListModel<String> usersModel = new DefaultListModel<String>();
-        JList usersList = new JList<String>(usersModel);
+        usersList = new JList<String>(usersModel);
         usersList.setPreferredSize(new Dimension(1000,1618));
         JList chatsList = new JList<String>(new DefaultListModel<String>());
         chatsList.setPreferredSize(new Dimension(1000,1000));
@@ -365,14 +376,57 @@ public class Messenger_GUI implements  ActionListener{
         }
         else if(action.equals("login"))
         {
-            System.out.println("going home! :3");
+            String ret = Messenger.LogIn(esql,loginUser.getText(), new String(loginPass.getPassword()));
+            if(ret != null)
+            {
+                if(Pattern.matches("Error: .*",ret)) {
+                    loginError.setText(ret.split(" ",2)[1]);
+                    loginUser.setText("");
+                    loginPass.setText("");
+                    Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(loginUser)).getFocusOwner();
+                    loginUser.requestFocusInWindow();
+                    loginPass.requestFocusInWindow();
+                    owner.requestFocusInWindow();
+                    return;
+                }
+            }
+            else
+            {
+                loginError.setText("Unable to Connect!");
+                return;
+            }
+            MessengerUser.current = new MessengerUser();
+            MessengerUser.current.name = loginUser.getText();
+            
             ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
             ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
         }
         else if(action.equals("sign up"))
         {
+            if(signUpUser.getText().length() == 0) {
+                signUpError.setText("Username is Empty!");
+                return;
+            }
+            String password = new String(signUpPass.getPassword());
+            
+            if(!phoneLine.isEditValid()) {
+                signUpError.setText("Please enter a valid phone number!");
+                return;
+            }
+            
+            System.out.println("Attempting to create user!");
+            System.out.println(signUpUser.getText());
+            System.out.println(password);
+            System.out.println(phoneLine.getText());
+            System.out.println("Online");
+            String ret = Messenger.CreateUser(esql,signUpUser.getText(), password, phoneLine.getText(), "Online");
+            
+            if(ret == null)
+                signUpError.setText("Sign Up Error");
+            else
+                signUpError.setText("");
             //phoneLine.setText("");
-            phoneLine.setValue(null);
+            //phoneLine.setValue(null);
             //Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).getFocusOwner();
             //phoneLine.requestFocusInWindow();
             //owner.requestFocusInWindow();
@@ -391,6 +445,8 @@ public class Messenger_GUI implements  ActionListener{
         }
         
     }
+    
+    
 
     private static void createAndShowGUI() {
         JFrame.setDefaultLookAndFeelDecorated(true);
@@ -399,6 +455,8 @@ public class Messenger_GUI implements  ActionListener{
         //Create and set up the content pane.
         Messenger_GUI demo = new Messenger_GUI();
         frame.setContentPane(demo.createContentPane());
+        
+        frame.addWindowListener(demo);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(160*6, 90*6); //960 x 540
@@ -413,5 +471,87 @@ public class Messenger_GUI implements  ActionListener{
                 createAndShowGUI();
             }
         });
+        
+        try{
+            // use postgres JDBC driver.
+            System.out.println("Driver?");
+            Class.forName ("org.postgresql.Driver").newInstance ();
+            System.out.println("Yes: " + args.length);
+            // instantiate the Messenger object and creates a physical
+            // connection.
+            String dbname = args[0];
+            String dbport = args[1];
+            String user = args[2];
+            String passwd = args[3];
+            esql = new Messenger (dbname, dbport, user, passwd);
+        }catch(Exception e) {
+		    System.err.println (e.getMessage ());
+        }/*finally{
+            // make sure to cleanup the created table and close the connection.
+            try{
+            if(esql != null) {
+                System.out.print("Disconnecting from database...");
+                esql.cleanup ();
+                System.out.println("Done\n\nBye !");
+            }//end if
+            }catch (Exception e) {
+                // ignored.
+            }//end try
+        }//end try*/
+        if(esql != null)
+            System.out.println("Connected!");
+        else
+            System.out.println("Not Connected!");
+    }
+    
+    protected void finalize() {
+        try{
+            if(esql != null) {
+                System.out.print("Disconnecting from database...");
+                esql.cleanup ();
+                System.out.println("Done\n\nBye !");
+            }//end if
+        }catch (Exception e) {
+            // ignored.
+        }//end try
+    }
+    
+    public void windowClosing(WindowEvent e) {
+        finalize();
+    }
+    
+    private class KeyEater extends KeyAdapter{
+        public void keyTyped(KeyEvent e) {
+            final String legalChars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM._'" + (char)166;
+            char c = e.getKeyChar();
+            if(c != KeyEvent.VK_BACK_SPACE && c != KeyEvent.VK_DELETE &&
+                c != KeyEvent.VK_TAB && !legalChars.contains(""+c))
+                e.consume();
+        }
+    }
+    
+    private boolean shouldNotify = true;
+    
+    private class NotificationManager extends SwingWorker<Void, String> {
+        
+        protected Void doInBackground() {
+        
+            while(shouldNotify)
+            {
+                publish(Messenger.ReadNotifications(esql, MessengerUser.current.name));
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //Cancelled!
+                break;
+                }
+            }
+            return null;
+        }
+        
+        protected void process(List<String> notifications) {
+            for(String s : notifications)
+                System.out.println(s);
+        }
     }
 }
