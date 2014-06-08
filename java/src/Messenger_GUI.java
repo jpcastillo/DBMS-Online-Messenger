@@ -263,7 +263,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         chatArea = new ChatPane();
         chatArea.setEditable(false);
-        leftPanel.add(chatArea);
+        JScrollPane scrollArea = new JScrollPane(chatArea);
+        leftPanel.add(scrollArea);
         
         ChatBarResponder responder = new ChatBarResponder(chatArea);
         
@@ -342,7 +343,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         JButton logoutButton = new JButton();
         logoutButton.setActionCommand("logout");
         logoutButton.addActionListener(this);
-        URL imgUrl = getClass().getResource("images/Exclamation_mark_gray.png");
+        URL imgUrl = getClass().getResource("images/logout.png");
         ImageIcon dummy = new ImageIcon(imgUrl, "Dummy");
         Image img = dummy.getImage();
         Image newImg = img.getScaledInstance(32,32,java.awt.Image.SCALE_SMOOTH);
@@ -711,21 +712,33 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     
     private class ChatHistoryManager extends DaemonManager<String[]> {
         Chat lastChat = Chat.activeChat;
+        private boolean wait = false;
     
         public ChatHistoryManager(int period) {super(period);}
         public ChatHistoryManager() {super();}
     
         protected String[] doQuery() {
-            if(lastChat != null)
-                return Messenger.GetChatHistory(esql, lastChat.cid, lastChat.lastUpdate);
+            
+            if(wait)
+                return null;
+            Chat chat = lastChat;
+            
+            if(chat != null) {
+                String[] ret = Messenger.GetChatHistory(esql, chat.cid, chat.lastUpdate);
+                wait = true;
+                return ret;
+            }
                 
             lastChat = Chat.activeChat;
             return null;
         }
         
         protected void processQuery(String[] query) {
+            wait = false;
+            System.out.println("Chat History:");
             for(String s : query)
-                System.out.println(s);
+                System.out.println("    " + s);
+            lastChat = Chat.activeChat;
         }
     }
     

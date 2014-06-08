@@ -2,11 +2,11 @@ import javax.swing.text.*;
 import java.util.Hashtable;
 
 class Chat {
-    public static Chat activeChat;
+    public static Chat activeChat = null;
     public static Hashtable<Integer,Chat> chats = new Hashtable<Integer,Chat>();
     public MessengerUser[] activeUsers = new MessengerUser[0];
-    public MessengerUser owner;
-    String lastUpdate;
+    public MessengerUser owner = null;
+    String lastUpdate = "";
     
     int cid;
     
