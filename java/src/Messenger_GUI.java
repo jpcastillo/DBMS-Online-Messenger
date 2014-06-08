@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 import java.net.URL;
 
 public class Messenger_GUI extends WindowAdapter implements ActionListener{
-
+    public static Messenger_GUI gui = null;
     public static Messenger esql;
     // Definition of global values and items that are part of the GUI.
 
@@ -476,6 +476,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
 
         //Create and set up the content pane.
         Messenger_GUI demo = new Messenger_GUI();
+        gui = demo;
         frame.setContentPane(demo.createContentPane());
         
         frame.addWindowListener(demo);
@@ -585,14 +586,17 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             if(queries.size() == 0)
                 return;
             
-            T query = queries.get(queries.size()-1);
-            
-            if(!query.equals(lastQuery)) {
-                processQuery(query);
+            for(T query : queries) {
+                
+                if(!matches(query,lastQuery)) {
+                    processQuery(query);
+                }
+                
+                lastQuery = query;
             }
-            
-            lastQuery = query;
         }
+        
+        protected boolean matches(T a, T b) { return a.equals(b); }
         
         protected abstract T doQuery();
         protected abstract void processQuery(T query);
@@ -604,7 +608,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         new ChatUsersManager(100).execute();
         new ContactsManager(100).execute();
         new BlockedManager(100).execute();
-        new ChatHistoryManager(100).execute();
+        //new ChatHistoryManager(100).execute();
     }
     
     private class NotificationManager extends DaemonManager<String> {
@@ -710,10 +714,11 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         }
     }
     
-    private class ChatHistoryManager extends DaemonManager<String[]> {
-        Chat lastChat = Chat.activeChat;
+    public class ChatHistoryManager extends DaemonManager<String[]> {
+        Chat chat = null;
         private boolean wait = false;
     
+        public ChatHistoryManager(int period, Chat chat) {super(period); this.chat = chat;}
         public ChatHistoryManager(int period) {super(period);}
         public ChatHistoryManager() {super();}
     
@@ -721,24 +726,58 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             
             if(wait)
                 return null;
-            Chat chat = lastChat;
             
             if(chat != null) {
                 String[] ret = Messenger.GetChatHistory(esql, chat.cid, chat.lastUpdate);
                 wait = true;
                 return ret;
             }
-                
-            lastChat = Chat.activeChat;
+            
             return null;
         }
         
-        protected void processQuery(String[] query) {
+        @Override 
+        protected boolean matches(String[] a, String[] b) {
+            if(a == null || b == null)
+                if(b == a) {
+                    wait = false;
+                    return true;
+                }
+                else
+                    return false;
+                
+                
+            if(a.length != b.length)
+                return false;
+                
+            for(int i = 0; i < a.length; ++i) {
+                if(!a[i].equals(b[i]))
+                    return false;
+            }
+            
             wait = false;
-            System.out.println("Chat History:");
-            for(String s : query)
-                System.out.println("    " + s);
-            lastChat = Chat.activeChat;
+            return true;
+        }
+        
+        protected void processQuery(String[] query) {
+            
+            for(String s : query){
+                String[] components = s.split("\n",6);
+                int mid = Integer.parseInt(components[0]);
+                Message message = Message.getMessage(mid);
+                message.mid = mid;
+                message.user = components[1];
+                message.timestamp = components[2];
+                message.text = components[3];
+                message.media_type = components[4];
+                message.media_url = components[5];
+                
+                chat.updateMessage(message);
+                
+                System.out.println(s);
+            }
+            
+            wait = false;
         }
     }
     

@@ -33,6 +33,10 @@ class ChatPane extends JTextPane {
     
     void systemMessage(String s)
     {
+        if(Chat.activeChat != null) {
+            Chat.activeChat.updateMessage(Message.systemMessage(s));
+        }
+            
         StyledDocument doc = getStyledDocument();
         try
         {

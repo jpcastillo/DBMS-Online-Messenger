@@ -1,5 +1,5 @@
 main = Messenger_GUI
-sources = $(main).java GhostText.java ChatPane.java ChatBarResponder.java Chat.java Messenger.java Command.java MessengerUser.java
+sources = $(main).java GhostText.java ChatPane.java ChatBarResponder.java Chat.java Messenger.java Command.java MessengerUser.java Message.java
 objects = $(sources:.java=.class)
 #$(sources:.java=.class:./=../classes/)
 flags = -cp .:../lib/pg73jdbc3.jar

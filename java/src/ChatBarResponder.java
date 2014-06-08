@@ -105,13 +105,26 @@ class ChatBarResponder implements ActionListener, KeyListener {
         }
         
         //message found, process it
-        String escapedString = text;//org.postgresql.core.BaseConnection.escapeString(text);
-        String ret = Messenger.NewMessage(esql, escapedString, "", MessengerUser.current.name, 0/*Chat.activeChat.cid*/, "");
+        String safeText = safeString(text);//org.postgresql.core.BaseConnection.escapeString(text);
+        if(Chat.activeChat != null) {
+            String ret = Messenger.NewMessage(esql, safeText, "2014-07-30 02:34:49", MessengerUser.current.name, Chat.activeChat.cid, "");
+            
+            if(ret != null && Pattern.matches("Error:.*",ret)) {
+                Chat.activeChat.createSystemMessage(ret);
+            }
+        } else {
+            chatArea.systemMessage("!! There is no active chat session!");
+            chatArea.systemMessage("   Select a chat on the bottom right panel,");
+            chatArea.systemMessage("   or create a new chat by /whisper");
+            chatArea.systemMessage("");
+        }
         
-        System.out.println("Message: " + ret); 
-        
-        
-        
+    }
+    
+    public String safeString(String s) {
+        String safeStr = s.replace("'", "''");
+        safeStr = safeStr.replace("\\", "\\\\");
+        return safeStr;
     }
     
     public void help() {
