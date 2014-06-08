@@ -149,9 +149,9 @@ public class Messenger {
 			for (String str: cols) {
 				String tmp2 = rs.getString(str);
 				tmp2 = (tmp2==null) ? "" : tmp2;
-				tmp += tmp2.trim() + ",";
+				tmp += tmp2.trim() + "\n";
 			}
-			// remove the extra comma at the end
+			// remove the extra delimiter at the end
 			tmp = tmp.substring(0,tmp.length()-1);
 			// add this csv string to our return list
 			ret_list.add(tmp);
