@@ -459,12 +459,17 @@ public class Messenger {
 		try {
 			String query;
 			if (fromTimeStamp.length() > 0) {
+<<<<<<< HEAD
 				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
 				query = String.format("select distinct (m.msg_id),m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
+=======
+				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp); 
+				query = String.format("select distinct(m.msg_id),m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = '%d' and m.msg_timestamp > '%s' order by m.msg_timestamp asc;",chatID,fromTimeStamp);
+>>>>>>> bd9be90... Fixed GetChatHistory() duplicates bug
 			}
 			else {
 				//query = String.format("select m.* from chat_list cl join message m on cl.chat_id = m.chat_id where cl.chat_id = '%d' order by m.msg_timestamp asc;",chatID);
-				query = String.format("select distinct (m.msg_id),m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = %d order by m.msg_timestamp asc;",chatID);
+				query = String.format("select distinct(m.msg_id),m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = %d order by m.msg_timestamp asc;",chatID);
 				//System.out.println("Q: "+query);
 			}
 
