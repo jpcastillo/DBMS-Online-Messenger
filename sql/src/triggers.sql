@@ -653,7 +653,7 @@ if num_rows = 0 then
 	return 'Error: Invalid owner or message does not exist.';
 end if;
 
-update message set msg_text = v_MsgText where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+update message set msg_text = v_MsgText, msg_timestamp = to_timestamp(now(),'YYYY-MM-DD HH:MI:SS') where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
 
 return retVal;
 
