@@ -432,6 +432,10 @@ select into retVal array_to_string (
 	),
 '|[(^#^)]|');
 
+if retVal = null then
+	retVal := '';
+end if;
+
 return retVal;
 
 end;
