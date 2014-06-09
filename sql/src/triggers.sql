@@ -451,7 +451,7 @@ create or replace function markReadNotifications(v_Login char(50), v_MsgId text)
 declare
 	retVal text := '';
 	num_rows integer := 0;
-	num_chat_id integer := 0;
+	num_msg_id integer := 0;
 	tmp integer := 0;
 	chat_str text := '';
 	cur_str text := '';
@@ -466,10 +466,11 @@ if num_rows = 0 then
 	return 'Error: Invalid login.';
 end if;
 
-num_chat_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
+-- get number of message ids in v_MsgId
+num_msg_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
 
 chat_str := v_MsgId;
-for i in 1..num_chat_id loop
+for i in 1..num_msg_id loop
 	select into tmp position(',' in chat_str);
 	cur_str := substring(chat_str from 0 for tmp);
 	chat_str := substring(chat_str from tmp+1 for length(chat_str)-tmp);
@@ -693,6 +694,7 @@ create or replace function updateMessage(v_Login char(50), v_MsgID integer, v_Ms
 declare
 	retVal text := '';
 	num_rows integer := 0;
+	tmpChatId integer := -1;
 begin
 
 select into num_rows count(*) from message where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
@@ -702,6 +704,13 @@ if num_rows = 0 then
 end if;
 
 update message set msg_text = v_MsgText, msg_timestamp = to_timestamp(now(),'YYYY-MM-DD HH:MI:SS') where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+-- code to add edited message to notification
+select into tmpChatId chat_id from message where msg_id = v_MsgID;
+delete from notification where msg_id = v_MsgID;
+insert into notification (usr_login,msg_id)
+select cl.member,v_MsgID from chat_list cl where lower(cl.member) != lower(v_Login) and cl.chat_id = tmpChatId;
+--select cl.member,v_MsgID into notification from chat_list cl where lower(cl.member) != lower(v_Login) and cl.chat_id = tmpChatId;
 
 return retVal;
 
