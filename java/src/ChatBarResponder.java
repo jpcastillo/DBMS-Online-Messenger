@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.util.regex.Pattern;
 import java.util.*;
+import java.text.*;
 import org.postgresql.*;
 
 //class which responds to the message bar in the GUI
@@ -60,29 +61,30 @@ class ChatBarResponder implements ActionListener, KeyListener {
             String ret = null;
             
             switch(index) {
-            case 0:
+            case 0: //add
                 ret = Messenger.AddToContact(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 1:
+            case 1: //block
                 ret = Messenger.AddToBlock(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 2:
+            case 2: //delete-account
+                System.out.println("Deleting Account: ." + MessengerUser.current.name + ".");
                 ret = Messenger.DeleteAccount(esql, MessengerUser.current.name);
                 break;
-            case 3:
-                //delete mesage
+            case 3: //delete message
+                ret = Messenger.DeleteMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]));
                 break;
-            case 4:
-                //edit
+            case 4: //edit
+                ret = Messenger.UpdateMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]), safeString(command[2]));
                 break;
-            case 5:
+            case 5: //help
                 help();
                 break;
             case 6://invite
                 ret = Messenger.AddToChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
             case 7://leave
-                
+                ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, MessengerUser.current.name);
                 break;
             case 8://remove
                 ret = Messenger.DelFromContacts(esql, MessengerUser.current.name, command[1]);
@@ -94,12 +96,19 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
             case 11://whisper
-                ret = Messenger.NewMessage(esql, command[2], "", MessengerUser.current.name, -1, command[1]);
+                String safeText = safeString(command[2]);
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
+                String timestamp = format.format(selfdestruct);
+                System.out.println(timestamp);
+                ret = Messenger.NewMessage(esql, safeText, timestamp, MessengerUser.current.name, -1, command[1]);
                 break;
             default:;
             }
             if(ret != null)
                 System.out.println(ret);
+                
+            System.out.println("COMMAND DONE!");
             
             return;
         }
@@ -107,7 +116,11 @@ class ChatBarResponder implements ActionListener, KeyListener {
         //message found, process it
         String safeText = safeString(text);//org.postgresql.core.BaseConnection.escapeString(text);
         if(Chat.activeChat != null) {
-            String ret = Messenger.NewMessage(esql, safeText, "2014-07-30 02:34:49", MessengerUser.current.name, Chat.activeChat.cid, "");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
+            String timestamp = format.format(selfdestruct);
+            System.out.println(timestamp);
+            String ret = Messenger.NewMessage(esql, safeText, timestamp, MessengerUser.current.name, Chat.activeChat.cid, "");
             
             if(ret != null && Pattern.matches("Error:.*",ret)) {
                 Chat.activeChat.createSystemMessage(ret);
@@ -175,23 +188,30 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 //c - contact, a - active user
                 //x - active user or contact
                 //System.out.println(c.argt.charAt(array.length-2));
+                
+                String[] names = null;
+                if(Chat.activeChat == null)
+                    names = new String[0];
+                else
+                    names = Chat.activeChat.userNames();
+                
                 switch(c.argt.charAt(array.length-2))
                 {
                 case 'm':
-                    source.setText(array[0] + ' ' + "");
+                    source.setText(array[0] + ' ' + bestMatch(array[1], Message.getIds()));
                     break;
                 case 't':
-                    source.setText(array[0] + ' ' + array[1] + ' ' + "");
+                    source.setText(array[0] + ' ' + array[1] + ' ' + Message.getMessage(Integer.parseInt(array[1])).text);
                     break;
                 case 'c':
                     System.out.println("Options: " + MessengerUser.current.contacts.length);
                     source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts));
                     break;
                 case 'a':
-                    source.setText(array[0] + ' ' + bestMatch(array[1],Chat.activeChat.userNames()));
+                    source.setText(array[0] + ' ' + bestMatch(array[1],names));
                     break;
                 case 'x':
-                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts,Chat.activeChat.userNames()));
+                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts,names));
                     break;
                 case 'b':
                     source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.blocked));

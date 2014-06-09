@@ -41,11 +41,9 @@ class Chat {
     void systemMessage(String s)
     {
         //StyledDocument doc = getStyledDocument();
-        try
-        {
+        try {
             doc.insertString(doc.getLength(), "\n" + s, ChatPane.system);
-        }
-        catch(Exception e) { System.out.println(e); }
+        } catch(Exception e) { System.out.println(e); }
     }
     
     void userMessage(String user, String message)
@@ -64,6 +62,20 @@ class Chat {
         catch(Exception e) { System.out.println(e); }
     }
     
+    void userMessage(Message msg) {
+        try {
+            doc.insertString(doc.getLength(), "\n[" + msg.mid + "] ", ChatPane.m_id);
+        } catch(Exception e) { System.out.println(e); }
+    
+        try {
+            doc.insertString(doc.getLength(), msg.user, ChatPane.user);
+        } catch(Exception e) { System.out.println(e); }
+        
+        try {
+            doc.insertString(doc.getLength(), ": " + msg.text, ChatPane.message);
+        } catch(Exception e) { System.out.println(e); }
+    }
+    
     public void updateMessage(int mid) {
         updateMessage(Message.getMessage(mid));
     }
@@ -72,7 +84,7 @@ class Chat {
         System.out.println(messages.size());
         if(!messages.contains(message.mid)) { //new message
             messages.add(message.mid);
-            userMessage(message.user, message.text);
+            userMessage(message);
         } else { //message edit
             clearDoc();
             for(int i : messages) {
@@ -80,7 +92,7 @@ class Chat {
                     systemMessage(Message.getMessage(i).text);
                 } else { // user message
                     Message msg = Message.getMessage(i);
-                    userMessage(msg.user, msg.text);
+                    userMessage(msg);
                 }
             }
         }

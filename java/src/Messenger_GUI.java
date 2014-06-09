@@ -19,9 +19,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     public static Messenger_GUI gui = null;
     public static Messenger esql;
     // Definition of global values and items that are part of the GUI.
-
-    enum Panels {TITLE, SCORE, BUTTON, LAST};
-    EnumMap <Panels, JPanel> panels;
+    
     JPanel rightPanel, mainPanel;
     JMenuBar menuBar;
     JList usersList;
@@ -37,16 +35,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     EnumMap <ToggleButtons, JToggleButton> tbuttons = new EnumMap <ToggleButtons, JToggleButton>(ToggleButtons.class);
     
     DefaultListModel<String> usersModel, chatsModel;
-
     
-    /*enum Labels {RED, BLUE, RED_S, BLUE_S, LAST};
-    EnumMap <Labels, JLabel> labels;
-    JLabel redLabel, blueLabel, redScore, blueScore;
-    
-    enum Buttons {RED_BUTTON, BLUE_BUTTON, RESET_BUTTON, LAST};
-    EnumMap <Buttons, JButton> buttons;
-    JButton redButton, blueButton, resetButton;*/
-                        
+    //used to trigger Ghost text
     Condition emptyCondition = new Condition() {
         @Override
         public boolean condition(JTextField f){return f.getText().length() == 0;}
@@ -384,27 +374,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         }
         else if(action.equals("login"))
         {
-            String ret = Messenger.LogIn(esql,loginUser.getText(), new String(loginPass.getPassword()));
-            if(ret != null)
-            {
-                if(Pattern.matches("Error: .*",ret)) {
-                    loginError.setText(ret.split(" ",2)[1]);
-                    loginUser.setText("");
-                    loginPass.setText("");
-                    Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(loginUser)).getFocusOwner();
-                    loginUser.requestFocusInWindow();
-                    loginPass.requestFocusInWindow();
-                    owner.requestFocusInWindow();
-                    return;
-                }
-            }
-            else
-            {
-                loginError.setText("Unable to Connect!");
-                return;
-            }
-            
-            login(loginUser.getText());
+            tryLogin(loginUser.getText(), new String(loginPass.getPassword()));
         }
         else if(action.equals("sign up"))
         {
@@ -430,6 +400,14 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 signUpError.setText("Sign Up Error");
             else
                 signUpError.setText("");
+                
+            if(ret.equals("")) {
+                clearSignUp();
+                tryLogin(signUpUser.getText(), password);
+            } else
+                System.out.println("Sign Up Error: " + ret + "|");
+                
+            System.out.println("DONE SIGN-UP!");
             //phoneLine.setText("");
             //phoneLine.setValue(null);
             //Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).getFocusOwner();
@@ -452,6 +430,49 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
     }
     
+    void tryLogin(String user, String pass) {
+        String ret = Messenger.LogIn(esql,user, pass);
+        System.out.println("trying login: " + ret);
+        if(ret != null)
+        {
+            if(Pattern.matches("Error: .*",ret)) {
+                loginError.setText(ret.split(" ",2)[1]);
+                clearLogin();
+                return;
+            }
+        }
+        else
+        {
+            loginError.setText("Unable to Connect!");
+            return;
+        }
+        
+        clearLogin();
+        login(user);
+    }
+    
+    void clearLogin() {
+        loginError.setText("");
+        loginUser.setText("");
+        loginPass.setText("");
+        Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(loginUser)).getFocusOwner();
+        loginUser.requestFocusInWindow();
+        loginPass.requestFocusInWindow();
+        owner.requestFocusInWindow();
+    }
+    
+    void clearSignUp() {
+        signUpError.setText("");
+        signUpUser.setText("");
+        signUpPass.setText("");
+        phoneLine.setValue(null);
+        Component owner = (Component)((JFrame) SwingUtilities.getWindowAncestor(loginUser)).getFocusOwner();
+        signUpUser.requestFocusInWindow();
+        signUpPass.requestFocusInWindow();
+        owner.requestFocusInWindow();
+        
+    }
+    
     void login(String user) {
         MessengerUser.current = MessengerUser.getUser(user);
         
@@ -459,6 +480,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
         ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
+        
+        System.out.println("Current user: " + user);
     }
     
     void logout() {
@@ -497,9 +520,9 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         try{
             // use postgres JDBC driver.
-            System.out.println("Driver?");
+            //System.out.println("Driver?");
             Class.forName ("org.postgresql.Driver").newInstance ();
-            System.out.println("Yes: " + args.length);
+            //System.out.println("Yes: " + args.length);
             // instantiate the Messenger object and creates a physical
             // connection.
             String dbname = args[0];
@@ -719,8 +742,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         private boolean wait = false;
     
         public ChatHistoryManager(int period, Chat chat) {super(period); this.chat = chat;}
-        public ChatHistoryManager(int period) {super(period);}
-        public ChatHistoryManager() {super();}
+        //public ChatHistoryManager(int period) {super(period);}
+        //public ChatHistoryManager() {super();}
     
         protected String[] doQuery() {
             
