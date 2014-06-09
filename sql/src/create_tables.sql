@@ -31,7 +31,7 @@ CREATE TABLE USER_LIST_CONTAINS(
 	FOREIGN KEY(list_member) REFERENCES USR(login) ON DELETE CASCADE);
 
 CREATE TABLE CHAT(
-	chat_id serial, 
+	chat_id serial,
 	chat_type char(50) NOT NULL,
 	init_sender char(50),
 	PRIMARY KEY(chat_id), 

@@ -90,9 +90,9 @@ select into num_rows count(*) from usr where lower(login) = lower(un);
 
 -- some conditionals to check validity of credentials
 if num_rows = 0 then
-	retVal := 'Error: Invalid login.';
+	return 'Error: Invalid login.';
 elsif num_rows = 1 then
-	retVal := '';
+	--retVal := '';
 	
 	-- let's check if there are any chats owned by the user
 	select into num_chats count(*) from chat where lower(init_sender) = lower(un);
@@ -123,7 +123,8 @@ elsif num_rows = 1 then
 	delete from usr where lower(login) = lower(un);
 	delete from user_list where list_id = cl_id or list_id = bl_id;
 else
-	retVal := 'Error: Multiple matches returned.';
+	--retVal := 'Error: Multiple matches returned.';
+	return 'Error: Multiple matches returned.';
 end if;
 
 return retVal;
@@ -527,13 +528,9 @@ create or replace function editChatList(v_ChatID integer, v_LoginA char(50), v_L
 declare
 	retVal text := '';
 	num_rows integer := 0;
+	tmp1 text := '';
+	tmp2 text := '';
 begin
-
-select into num_rows count(*) from chat where lower(init_sender) = lower(v_LoginA) and chat_id = v_ChatID;
-
-if num_rows = 0 then
-	return 'Error: User needs to be owner of chat.';
-end if;
 
 select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
 
@@ -543,6 +540,12 @@ end if;
 
 if v_Control > 0 then
 -- add to chat
+	select into num_rows count(*) from chat where lower(init_sender) = lower(v_LoginA) and chat_id = v_ChatID;
+
+	if num_rows = 0 then
+		return 'Error: User needs to be owner of chat.';
+	end if;
+
 	-- first check if LoginB is already in chat or not.
 	select into num_rows count(*) from chat_list where lower(member) = lower(v_LoginB) and chat_id = v_ChatID;
 
@@ -554,7 +557,43 @@ if v_Control > 0 then
 	insert into chat_list values (v_ChatID, v_LoginB);
 else
 -- remove from chat
-	delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginB);
+	if lower(v_LoginA) = lower(v_LoginB) then -- if1
+		-- want to remove self
+		select into num_rows count(*) from chat where lower(init_sender) = lower(v_LoginA) and chat_id = v_ChatID;
+		
+		if num_rows = 0 then -- if2
+			-- is not the owner
+			delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
+			
+		else -- if2
+			-- is owner. need to assign new owner.
+			select into tmp1,tmp2 cl.member,u.login from chat_list cl left join usr u on cl.member = u.login where cl.chat_id = v_ChatID order by u.login asc limit 1;
+			
+			if tmp1 is null then -- if3
+				-- chat is empty
+				delete from chat where chat_id = v_ChatID;
+			elsif tmp2 is null then -- if3
+				-- chat is not empty. chat member does not exist in usr. Chat is broken.
+				delete from chat_list where chat_id = v_ChatID;
+				delete from chat where chat_id = v_ChatID;
+				return 'Error: Chat is broken. Removed chat and its members.';
+			else
+				-- chat is not empty. assign new owner.
+				update chat set init_sender = tmp1 where chat_id = v_ChatID;
+			end if; -- if3
+		
+		end if; -- if2
+
+	else -- if1
+		-- want to remove someone else
+		select into num_rows count(*) from chat where lower(init_sender) = lower(v_LoginA) and chat_id = v_ChatID;
+		if num_rows = 0 then -- if4
+			return 'Error: User needs to be owner of chat.';
+		end if; -- if4
+
+		delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginB);
+
+	end if; -- if1
 end if;
 
 return retVal;
