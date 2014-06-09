@@ -432,7 +432,7 @@ select into retVal array_to_string (
 	),
 '|[(^#^)]|');
 
-if retVal = null then
+if retVal is null then
 	retVal := '';
 end if;
 
