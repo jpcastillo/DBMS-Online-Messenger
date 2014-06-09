@@ -92,6 +92,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         passwordLine.setHorizontalAlignment(JTextField.CENTER);
         passwordLine.setFont(userLine.getFont());
         passwordLine.setMaximumSize(new Dimension(Short.MAX_VALUE, passwordLine.getPreferredSize().height));
+        passwordLine.setActionCommand("login");
+        passwordLine.addActionListener(this);
         loginPanel.add(new JLayer<JTextField>(passwordLine,new GhostText(passwordLine, "Password", emptyCondition)));
         
         JPanel line = new JPanel();
@@ -494,8 +496,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         if(ret != null)
         {
             if(Pattern.matches("Error: .*",ret)) {
-                loginError.setText(ret.split(" ",2)[1]);
                 clearLogin();
+                loginError.setText(ret.split(" ",2)[1]);
                 return;
             }
         }
@@ -534,9 +536,13 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     void login(String user) {
         MessengerUser.current = MessengerUser.getUser(user);
         
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(phoneLine);
+        
+        frame.setTitle("DBMS Online Messenger - " + user);
+        
         startDaemons();
         
-        ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
+        frame.setJMenuBar(menuBar);
         ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
         
         //disableActiveChat();
@@ -544,10 +550,17 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     
     void logout() {
     
+        Messenger.Logout(esql,MessengerUser.current.name);
         MessengerUser.current = null;
         Chat.activeChat = null;
         
-        ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(null);
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(phoneLine);
+        
+        if(frame != null) {
+            frame.setTitle("DBMS Online Messenger");
+        }
+        
+        frame.setJMenuBar(null);
         ((CardLayout)mainPanel.getLayout()).show(mainPanel,"INIT");
         
         disableActiveChat();
@@ -618,6 +631,10 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     }
     
     protected void finalize() {
+        if(MessengerUser.current != null) {
+            logout();
+        }
+    
         try{
             if(esql != null) {
                 System.out.print("Disconnecting from database...");
@@ -630,6 +647,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     }
     
     public void windowClosing(WindowEvent e) {
+        
         finalize();
     }
     
@@ -705,6 +723,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         new ContactsManager(100).execute();
         new BlockedManager(100).execute();
         //new ChatHistoryManager(100).execute();
+        new ExpireManager(100).execute();
     }
     
     private class NotificationManager extends DaemonManager<String> {
@@ -788,13 +807,17 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         protected void processQuery(String query) {
             usersModel.clear();
-            String[] users = query.split(",");
+            String[] users = query.split("\\|\\[\\(\\^\\#\\^\\)\\]\\|");
             MessengerUser[] activeUsers = new MessengerUser[users.length];
             
             int index = 0;
             for(String user : users) {
-                usersModel.addElement(user);
-                activeUsers[index++] = MessengerUser.getUser(user);
+                String[] components = user.split("\\\\n");
+                String name = components[0];
+                String status = components[1];
+                usersModel.addElement(name + " (" + status + ")");
+                activeUsers[index] = MessengerUser.getUser(name);
+                activeUsers[index++].status = status;
             }
             
             lastChat.activeUsers = activeUsers;
@@ -844,6 +867,17 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         }
     }
     
+    private class ExpireManager extends DaemonManager<Void> {
+        public ExpireManager(int period) {super(period);}
+        public ExpireManager() {super();}
+        
+        protected Void doQuery() {
+            Messenger.RemoveExpired(esql);
+            return null;
+        }
+        protected void processQuery(Void v) {}
+    }
+    
     public class ChatHistoryManager extends DaemonManager<String[]> {
         Chat chat = null;
         private boolean wait = false;
@@ -875,8 +909,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 }
                 else
                     return false;
-                
-                
+        
             if(a.length != b.length)
                 return false;
                 
@@ -891,12 +924,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         protected void processQuery(String[] query) {
             
-            JScrollBar vertical = scrollArea.getVerticalScrollBar();
-            
-            int pos = -1;
-            
-            if(vertical != null)
-                pos = vertical.getValue();
+            chat.clear();
             
             for(String s : query){
                 String[] components = s.split("\n",6);
@@ -913,10 +941,6 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 
                 System.out.println(s);
             }
-            
-            vertical = scrollArea.getVerticalScrollBar();
-            if(vertical != null)
-                vertical.setValue(0);
             
             wait = false;
         }

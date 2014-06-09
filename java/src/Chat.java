@@ -109,4 +109,9 @@ class Chat {
         } catch (BadLocationException e) {}
         
     }
+    
+    public void clear() {
+        messages.clear();
+        clearDoc();
+    }
 }

@@ -39,6 +39,9 @@ class ChatBarResponder implements ActionListener, KeyListener {
         String text = source.getText().trim();
         source.setText("");
         
+        if(text.isEmpty())
+            return;
+        
         boolean valid = false;
         int index = -1;
         
