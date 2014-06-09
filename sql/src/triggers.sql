@@ -632,19 +632,19 @@ $$ language plpgsql volatile;
 --
 --	proc for deleting expired messages
 create language plpgsql;
-create or replace function selfDestruct() returns trigger as $$
+create or replace function selfDestruct() returns text as $$
 declare ts timestamp;
 begin
-	ts := now();
+	ts := to_timestamp(now(),'YYYY-MM-DD HH:MI:SS');
 	-- Messages with a self-destruction timestamp should be deleted from the system, after specified datetime and once it is read
 	delete from message where destr_timestamp < ts and msg_id not in (select msg_id from notification);
-   return new;
+   return '';
 end;
 $$ language plpgsql volatile;
 
 -- trigger for calling selfDestruct() proc on insert and update events
-drop trigger selfDestruct on message;
-create trigger selfDestruct after insert or update on message for each row execute procedure selfDestruct();
+--drop trigger selfDestruct on message;
+--create trigger selfDestruct after insert or update on message for each row execute procedure selfDestruct();
 ---------------------------------------------------------------------
 
 --

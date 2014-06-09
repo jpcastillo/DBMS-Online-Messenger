@@ -567,4 +567,21 @@ public class Messenger {
 		}
 	}//end
 
+	/*
+		Removes all expired messages from server
+		Returns empty string.
+	*/
+	public static String RemoveExpired(Messenger esql) {
+		try {
+			String query = "select selfDestruct() as retVal;";
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
 }//end Messenger
