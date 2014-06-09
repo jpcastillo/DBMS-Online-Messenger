@@ -622,8 +622,9 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         protected Void doInBackground() {
             while(shouldNotify) {
                 T ret = doQuery();
-                if(ret != null)
-                    publish(ret);
+                
+                tryPublish(ret);
+                
                 try {
                     Thread.sleep(period);
                 } catch (InterruptedException e) {
@@ -645,6 +646,11 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 
                 lastQuery = query;
             }
+        }
+        
+        protected void tryPublish(T ret) {
+            if(ret != null)
+                publish(ret);
         }
         
         protected boolean matches(T a, T b) { return a.equals(b); }
@@ -673,8 +679,10 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         protected void processQuery(String query) {
             System.out.println(query);
             
+            System.out.println("Notification: ." + query+".");
             if(query.equals("")) {
                 notifButton.setIcon(inactiveIcon);
+                
             } else {
                 notifButton.setIcon(activeIcon);
             }
@@ -684,6 +692,14 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             for(String notification : notifications) {
                 String[] components = notification.split("\\\\n");
             }
+        }
+        
+        @Override
+        protected void tryPublish(String ret) {
+            if(ret != null)
+                publish(ret);
+            else
+                publish("");
         }
     }
     

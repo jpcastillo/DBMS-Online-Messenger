@@ -489,9 +489,11 @@ public class Messenger {
 			String query = String.format("select readNotifications('%s') as retVal;", un);
 			String retVal = esql.executeQueryStr(query);
 
+            
 			return retVal;
 		}
 		catch(Exception e) {
+		    
 			//return e.getMessage();
 			return null;
 		}
@@ -557,6 +559,23 @@ public class Messenger {
 	public static String UpdateMessage(Messenger esql, String un, int msgId, String msgText) {
 		try {
 			String query = String.format("select updateMessage('%s',%d,'%s') as retVal;", un, msgId, msgText);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		Removes all expired messages from server
+		Returns empty string.
+	*/
+	public static String RemoveExpired(Messenger esql) {
+		try {
+			String query = "select selfDestruct() as retVal;";
 			String retVal = esql.executeQueryStr(query);
 
 			return retVal;
