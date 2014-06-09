@@ -741,3 +741,36 @@ return retVal;
 end;
 $$ language plpgsql volatile;
 ---------------------------------------------------------------------
+
+--
+--	proc adding an attachment to a message
+--	input: login, media_type, url, msg_id
+--	returns empty string on success. else error string.
+create language plpgsql;
+create or replace function newAttachment(v_Login char(50), v_MsgID integer, v_MediaType char(10), v_MediaUrl char(256)) returns text as $$
+declare
+	retVal text := '';
+	num_rows integer := 0;
+begin
+
+if length(v_MediaUrl) > 256 then
+	return 'Error: Media URL exceeds 256 characters.';
+end if;
+
+if length(v_MediaType) > 10 then
+	return 'Error: Media Type exceeds 10 characters.';
+end if;
+
+select into num_rows count(*) from message where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+if num_rows = 0 then
+	return 'Error: Invalid owner or message does not exist.';
+end if;
+
+insert into media_attachment (media_type,url,msg_id) values (v_MediaType,v_MediaUrl,v_MsgID);
+
+return retVal;
+
+end;
+$$ language plpgsql volatile;
+---------------------------------------------------------------------

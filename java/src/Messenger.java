@@ -51,7 +51,7 @@ public class Messenger {
 		System.out.print("Connecting to database...");
 		try {
 			// constructs the connection URL
-			String url = "jdbc:postgresql://localhost:" + dbport + "/" + dbname;
+			String url = "jdbc:postgresql://jpc.mine.nu:" + dbport + "/" + dbname;
 			System.out.println ("Connection URL: " + url + "\n");
 
 			// obtain a physical connection
@@ -530,14 +530,30 @@ public class Messenger {
 		Returns a count of messages in a specified chat (String).
 		Input: chatID
 	*/
-	public static int GetChatMessageCount(Messenger esql, int chatID) {
+	public static String GetChatMessageCount(Messenger esql, int chatID) {
 		try {
 			String query = String.format("select count(*) from message where chat_id=%d;",chatID);
 			
-			String retVal = esql.executeQueryStr(query);
-			return Integer.parseInt(retVal);
+			return esql.executeQueryStr(query);
+			//return Integer.parseInt(retVal);
 		}
 		catch(SQLException e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		INPUT: SenderLogin, MessageID, MediaType, URL
+	*/
+	public static String NewAttachment(Messenger esql, String un, int msgId, String mediaType, String url) {
+		try {
+			String query = String.format("select newAttachment('%s',%d,'%s','%s') as retVal;", un, msgId, mediaType, url);
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
 			//return e.getMessage();
 			return null;
 		}
