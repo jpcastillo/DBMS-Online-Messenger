@@ -205,7 +205,21 @@ declare
 	retVal text := '';
 begin
 
-select into retVal array_to_string( array( select btrim(member) from chat_list where chat_id = v_ChatId ), ',');
+select into retVal 
+array_to_string( 
+	array( 
+		select btrim(cl.member) || '\\n' || btrim(u.status)
+		from chat_list cl
+		join usr u on cl.member = u.login
+		where cl.chat_id = v_ChatId
+	),
+	'|[(^#^)]|'
+);
+
+if retVal is null then
+	retVal := '';
+end if;
+
 return retVal;
 
 end;
