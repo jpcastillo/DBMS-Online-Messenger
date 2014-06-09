@@ -204,7 +204,7 @@ public class Messenger {
 			return null;
 		}
 	}//end
-
+	
 	/*
 	* Check log in credentials for an existing user
 	* Returns empty string on success, else error string.
@@ -467,7 +467,7 @@ public class Messenger {
 				query = String.format("select distinct(m.msg_id),m.sender_login,m.msg_timestamp,m.msg_text,ma.media_type,ma.url from chat_list cl join message m on cl.chat_id = m.chat_id left join media_attachment ma on m.msg_id = ma.msg_id where cl.chat_id = %d order by m.msg_timestamp asc;",chatID);
 				//System.out.println("Q: "+query);
 			}
-
+			
 			String column_names = "msg_id,sender_login,msg_timestamp,msg_text,media_type,url";
 			String[] results = esql.executeQueryArray(query,column_names);
 			return results;
