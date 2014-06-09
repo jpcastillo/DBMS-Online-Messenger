@@ -525,4 +525,22 @@ public class Messenger {
 		}
 	}//end
 
+
+	/*
+		Returns a count of messages in a specified chat (String).
+		Input: chatID
+	*/
+	public static int GetChatMessageCount(Messenger esql, int chatID) {
+		try {
+			String query = String.format("select count(*) from message where chat_id=%d;",chatID);
+			
+			String retVal = esql.executeQueryStr(query);
+			return Integer.parseInt(retVal);
+		}
+		catch(SQLException e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
 }//end Messenger
