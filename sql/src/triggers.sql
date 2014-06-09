@@ -25,8 +25,15 @@ if num_rows = 0 then
 	retVal := 'Error: Incorrect login/password.';
 elsif num_rows = 1 then
 	retVal := '';
-	-- let's also update user's the status to 'Online'
-	update usr set status = 'Online' where lower(login) = lower(un) and password = md5(pw);
+	select into num_rows count(*) from usr where lower(login) = lower(un) and status != 'Offline';
+	if num_rows = 0 then
+		-- user is not already logged in.
+		-- let's update user's the status to 'Online'
+		update usr set status = 'Online' where lower(login) = lower(un);
+	else
+		-- user is already logged in.
+		return 'Error: User is already logged in.';
+	end if;
 else
 	retVal := 'Error: Multiple matches returned.';
 end if;
@@ -706,11 +713,14 @@ end if;
 update message set msg_text = v_MsgText, msg_timestamp = to_timestamp(now(),'YYYY-MM-DD HH:MI:SS') where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
 
 -- code to add edited message to notification
+
+-- store chat_id for message
 select into tmpChatId chat_id from message where msg_id = v_MsgID;
+-- remove old notification for this message
 delete from notification where msg_id = v_MsgID;
+-- re-add this message to the notification of chat members
 insert into notification (usr_login,msg_id)
 select cl.member,v_MsgID from chat_list cl where lower(cl.member) != lower(v_Login) and cl.chat_id = tmpChatId;
---select cl.member,v_MsgID into notification from chat_list cl where lower(cl.member) != lower(v_Login) and cl.chat_id = tmpChatId;
 
 return retVal;
 
