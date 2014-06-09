@@ -48,6 +48,7 @@ class Chat {
     
     void userMessage(String user, String message)
     {
+        System.out.println("Here!");
         //StyledDocument doc = getStyledDocument();
         try
         {
@@ -84,7 +85,10 @@ class Chat {
         System.out.println(messages.size());
         if(!messages.contains(message.mid)) { //new message
             messages.add(message.mid);
-            userMessage(message);
+            if(message.mid >= 0)
+                userMessage(message);
+            else
+                systemMessage(message.text);
         } else { //message edit
             clearDoc();
             for(int i : messages) {

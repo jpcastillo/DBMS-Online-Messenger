@@ -10,7 +10,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.util.*;
 import java.awt.geom.AffineTransform;
-import javax.swing.text.MaskFormatter;
+import javax.swing.text.*;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 import java.net.URL;
@@ -34,7 +34,10 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     enum ToggleButtons {LOGIN, SIGN_UP, HELP};
     EnumMap <ToggleButtons, JToggleButton> tbuttons = new EnumMap <ToggleButtons, JToggleButton>(ToggleButtons.class);
     
-    DefaultListModel<String> usersModel, chatsModel;
+    public DefaultListModel<String> usersModel, chatsModel;
+    
+    JButton notifButton = null;
+    ImageIcon activeIcon = null, inactiveIcon = null;
     
     //used to trigger Ghost text
     Condition emptyCondition = new Condition() {
@@ -286,9 +289,6 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         JList chatsList = new JList<String>(chatsModel);
         chatsList.addMouseListener(new ChatListListener());
         chatsList.setPreferredSize(new Dimension(1000,1000));
-        usersModel.addElement("ONE");
-        usersModel.addElement("TWO");
-        usersModel.addElement("THREE");
         
         JPanel fill = new JPanel(new BorderLayout(0,0));
         fill.add(usersList,BorderLayout.CENTER);
@@ -330,13 +330,32 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         menuBar.add(Box.createHorizontalGlue());
         
-        JButton logoutButton = new JButton();
-        logoutButton.setActionCommand("logout");
-        logoutButton.addActionListener(this);
-        URL imgUrl = getClass().getResource("images/logout.png");
+        notifButton = new JButton();
+        notifButton.setActionCommand("notifications");
+        notifButton.addActionListener(this);
+        URL imgUrl = getClass().getResource("images/Exclamation_mark_red.png");
         ImageIcon dummy = new ImageIcon(imgUrl, "Dummy");
         Image img = dummy.getImage();
         Image newImg = img.getScaledInstance(32,32,java.awt.Image.SCALE_SMOOTH);
+        activeIcon = new ImageIcon(newImg, "Active Notifications");
+        
+        imgUrl = getClass().getResource("images/Exclamation_mark_gray.png");
+        dummy = new ImageIcon(imgUrl, "Dummy");
+        img = dummy.getImage();
+        newImg = img.getScaledInstance(32,32,java.awt.Image.SCALE_SMOOTH);
+        inactiveIcon = new ImageIcon(newImg, "Logout");
+        
+        notifButton.setIcon(inactiveIcon);
+        notifButton.setPreferredSize(new Dimension(36,36));
+        menuBar.add(notifButton);
+        
+        JButton logoutButton = new JButton();
+        logoutButton.setActionCommand("logout");
+        logoutButton.addActionListener(this);
+        imgUrl = getClass().getResource("images/logout.png");
+        dummy = new ImageIcon(imgUrl, "Dummy");
+        img = dummy.getImage();
+        newImg = img.getScaledInstance(32,32,java.awt.Image.SCALE_SMOOTH);
         ImageIcon icon = new ImageIcon(newImg, "Logout");
         logoutButton.setIcon(icon);
         logoutButton.setPreferredSize(new Dimension(36,36));//logoutButton.getIcon().getIconWidth()+4,logoutButton.getIcon().getIconHeight()+4));
@@ -481,7 +500,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(menuBar);
         ((CardLayout)mainPanel.getLayout()).show(mainPanel,"HOME");
         
-        System.out.println("Current user: " + user);
+        //disableActiveChat();
     }
     
     void logout() {
@@ -491,6 +510,15 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         ((JFrame) SwingUtilities.getWindowAncestor(phoneLine)).setJMenuBar(null);
         ((CardLayout)mainPanel.getLayout()).show(mainPanel,"INIT");
+        
+        disableActiveChat();
+    }
+    
+    void disableActiveChat() {
+        Chat.activeChat = null;
+        chatArea.setStyledDocument(new DefaultStyledDocument());
+        usersModel.clear();
+        chatArea.systemMessage("There is currently no active chat");
     }
 
     private static void createAndShowGUI() {
@@ -606,8 +634,8 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         }
         
         protected void process(List<T> queries) {
-            if(queries.size() == 0)
-                return;
+            //if(queries.size() == 0)
+            //    return;
             
             for(T query : queries) {
                 
@@ -644,6 +672,18 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         protected void processQuery(String query) {
             System.out.println(query);
+            
+            if(query.equals("")) {
+                notifButton.setIcon(inactiveIcon);
+            } else {
+                notifButton.setIcon(activeIcon);
+            }
+            
+            String[] notifications = query.split("\\|\\[\\(\\^\\#\\^\\)\\]\\|");
+            
+            for(String notification : notifications) {
+                String[] components = notification.split("\\\\n");
+            }
         }
     }
     
@@ -653,6 +693,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     
         protected String doQuery() {
             return Messenger.ListUserChats(esql, MessengerUser.current.name);
+            //nid,mid,user,timestamp;
         }
         
         protected void processQuery(String query) {

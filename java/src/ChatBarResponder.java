@@ -5,6 +5,8 @@ import java.util.*;
 import java.text.*;
 import org.postgresql.*;
 
+import javax.swing.text.*;
+
 //class which responds to the message bar in the GUI
 class ChatBarResponder implements ActionListener, KeyListener {
 
@@ -85,9 +87,13 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 break;
             case 7://leave
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, MessengerUser.current.name);
+                Messenger_GUI.gui.disableActiveChat();
                 break;
             case 8://remove
                 ret = Messenger.DelFromContacts(esql, MessengerUser.current.name, command[1]);
+                if(command[1].equals(MessengerUser.current.name)) {
+                    Messenger_GUI.gui.disableActiveChat();
+                }
                 break;
             case 9://unblock
                 ret = Messenger.DelFromBlocks(esql, MessengerUser.current.name, command[1]);
