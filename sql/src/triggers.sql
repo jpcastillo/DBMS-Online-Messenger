@@ -25,8 +25,15 @@ if num_rows = 0 then
 	retVal := 'Error: Incorrect login/password.';
 elsif num_rows = 1 then
 	retVal := '';
-	-- let's also update user's the status to 'Online'
-	update usr set status = 'Online' where lower(login) = lower(un) and password = md5(pw);
+	select into num_rows count(*) from usr where lower(login) = lower(un) and status != 'Offline';
+	if num_rows = 0 then
+		-- user is not already logged in.
+		-- let's update user's the status to 'Online'
+		update usr set status = 'Online' where lower(login) = lower(un);
+	else
+		-- user is already logged in.
+		return 'Error: User is already logged in.';
+	end if;
 else
 	retVal := 'Error: Multiple matches returned.';
 end if;
@@ -198,7 +205,21 @@ declare
 	retVal text := '';
 begin
 
-select into retVal array_to_string( array( select btrim(member) from chat_list where chat_id = v_ChatId ), ',');
+select into retVal 
+array_to_string( 
+	array( 
+		select btrim(cl.member) || '\\n' || btrim(u.status)
+		from chat_list cl
+		join usr u on cl.member = u.login
+		where cl.chat_id = v_ChatId
+	),
+	'|[(^#^)]|'
+);
+
+if retVal is null then
+	retVal := '';
+end if;
+
 return retVal;
 
 end;
@@ -432,6 +453,10 @@ select into retVal array_to_string (
 	),
 '|[(^#^)]|');
 
+if retVal is null then
+	retVal := '';
+end if;
+
 return retVal;
 
 end;
@@ -447,7 +472,7 @@ create or replace function markReadNotifications(v_Login char(50), v_MsgId text)
 declare
 	retVal text := '';
 	num_rows integer := 0;
-	num_chat_id integer := 0;
+	num_msg_id integer := 0;
 	tmp integer := 0;
 	chat_str text := '';
 	cur_str text := '';
@@ -462,10 +487,11 @@ if num_rows = 0 then
 	return 'Error: Invalid login.';
 end if;
 
-num_chat_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
+-- get number of message ids in v_MsgId
+num_msg_id := length(regexp_replace(v_MsgId,'[^,]','','g'));
 
 chat_str := v_MsgId;
-for i in 1..num_chat_id loop
+for i in 1..num_msg_id loop
 	select into tmp position(',' in chat_str);
 	cur_str := substring(chat_str from 0 for tmp);
 	chat_str := substring(chat_str from tmp+1 for length(chat_str)-tmp);
@@ -563,6 +589,7 @@ else
 		
 		if num_rows = 0 then -- if2
 			-- is not the owner
+			delete from notification where lower(usr_login) = lower(v_LoginA) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 			delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
 			
 		else -- if2
@@ -574,12 +601,14 @@ else
 				delete from chat where chat_id = v_ChatID;
 			elsif tmp2 is null then -- if3
 				-- chat is not empty. chat member does not exist in usr. Chat is broken.
+				delete from notification where msg_id in (select msg_id from message where chat_id = v_ChatID);
 				delete from chat_list where chat_id = v_ChatID;
 				delete from chat where chat_id = v_ChatID;
 				return 'Error: Chat is broken. Removed chat and its members.';
 			else
 				-- chat is not empty. assign new owner.
 				update chat set init_sender = tmp1 where chat_id = v_ChatID;
+				delete from notification where lower(usr_login) = lower(v_LoginA) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 				delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
 			end if; -- if3
 		
@@ -592,6 +621,7 @@ else
 			return 'Error: User needs to be owner of chat.';
 		end if; -- if4
 
+		delete from notification where lower(usr_login) = lower(v_LoginB) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 		delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginB);
 
 	end if; -- if1
@@ -632,19 +662,19 @@ $$ language plpgsql volatile;
 --
 --	proc for deleting expired messages
 create language plpgsql;
-create or replace function selfDestruct() returns trigger as $$
+create or replace function selfDestruct() returns text as $$
 declare ts timestamp;
 begin
-	ts := now();
+	ts := to_timestamp(now(),'YYYY-MM-DD HH:MI:SS');
 	-- Messages with a self-destruction timestamp should be deleted from the system, after specified datetime and once it is read
 	delete from message where destr_timestamp < ts and msg_id not in (select msg_id from notification);
-   return new;
+   return '';
 end;
 $$ language plpgsql volatile;
 
 -- trigger for calling selfDestruct() proc on insert and update events
-drop trigger selfDestruct on message;
-create trigger selfDestruct after insert or update on message for each row execute procedure selfDestruct();
+--drop trigger selfDestruct on message;
+--create trigger selfDestruct after insert or update on message for each row execute procedure selfDestruct();
 ---------------------------------------------------------------------
 
 --
@@ -685,6 +715,7 @@ create or replace function updateMessage(v_Login char(50), v_MsgID integer, v_Ms
 declare
 	retVal text := '';
 	num_rows integer := 0;
+	tmpChatId integer := -1;
 begin
 
 select into num_rows count(*) from message where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
@@ -694,6 +725,16 @@ if num_rows = 0 then
 end if;
 
 update message set msg_text = v_MsgText, msg_timestamp = to_timestamp(now(),'YYYY-MM-DD HH:MI:SS') where lower(sender_login) = lower(v_Login) and msg_id = v_MsgID;
+
+-- code to add edited message to notification
+
+-- store chat_id for message
+select into tmpChatId chat_id from message where msg_id = v_MsgID;
+-- remove old notification for this message
+delete from notification where msg_id = v_MsgID;
+-- re-add this message to the notification of chat members
+insert into notification (usr_login,msg_id)
+select cl.member,v_MsgID from chat_list cl where lower(cl.member) != lower(v_Login) and cl.chat_id = tmpChatId;
 
 return retVal;
 
