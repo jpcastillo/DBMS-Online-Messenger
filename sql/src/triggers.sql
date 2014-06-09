@@ -567,7 +567,7 @@ else
 			
 		else -- if2
 			-- is owner. need to assign new owner.
-			select into tmp1,tmp2 cl.member,u.login from chat_list cl left join usr u on cl.member = u.login where cl.chat_id = v_ChatID order by u.login asc limit 1;
+			select into tmp1,tmp2 cl.member,u.login from chat_list cl left join usr u on cl.member = u.login where cl.chat_id = v_ChatID and lower(cl.member) != lower(v_LoginA) order by u.login asc limit 1;
 			
 			if tmp1 is null then -- if3
 				-- chat is empty
@@ -580,6 +580,7 @@ else
 			else
 				-- chat is not empty. assign new owner.
 				update chat set init_sender = tmp1 where chat_id = v_ChatID;
+				delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
 			end if; -- if3
 		
 		end if; -- if2
