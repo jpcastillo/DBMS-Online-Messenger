@@ -19,13 +19,16 @@ class ChatBarResponder implements ActionListener, KeyListener {
 
     public Command[] commands = {new Command("/add", 2, "a", "/add <user> - add user to your contacts"),
                                new Command("/block", 2, "x", "/block <user> - add user to your blocked list"),
+                               new Command("/blocked", 1, "", "/blocked - list your blocked users"),
+                               new Command("/contacts", 1, "", "/contacts - list your contacts"),
                                new Command("/delete-account", 1, "", "/delete-account - delete your account"),
                                new Command("/delete-message", 2, "m", "/delete-message <mid> - delete chosen message" ),
                                new Command("/edit", 3, "mt", "/message <mid> <new text> - modify chosen message" ),
                                new Command("/help", 1, "", "/help - list all commands"),
                                new Command("/invite", 2, "c", "/invite <user> - invite user to active chat (owner only)"),
                                new Command("/leave", 1, "", "/leave - leaves the active chat"),
-                               new Command("/remove", 2, "c", "/remove <user> - removes user from contacts"),
+                               new Command("/remove", 2, "c", "/remove <user> - removes user from your contacts"),
+                               new Command("/status", 2, "?", "/status <status> - changes your user status"),
                                new Command("/unblock", 2, "b", "/unblock <user> - removes user from blocked list"),
                                new Command("/uninvite", 2, "a", "/uninvite <user> - removes user from active chat (owner only)"),
                                new Command("/whisper", 3, "x?", "/whisper <user> <message> - creates a new chat with you and chosen user")
@@ -61,7 +64,7 @@ class ChatBarResponder implements ActionListener, KeyListener {
             }
             command = text.split(" ",commands[index].argc);
             String ret = null;
-            
+            chatArea.systemMessage(text);
             switch(index) {
             case 0: //add
                 ret = Messenger.AddToContact(esql, MessengerUser.current.name, command[1]);
@@ -69,39 +72,50 @@ class ChatBarResponder implements ActionListener, KeyListener {
             case 1: //block
                 ret = Messenger.AddToBlock(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 2: //delete-account
-                System.out.println("Deleting Account: ." + MessengerUser.current.name + ".");
+            case 2: //blocked
+                listBlocked();
+                break;
+            case 3: //contacts
+                listContacts();
+                break;
+            case 4: //delete-account
                 ret = Messenger.DeleteAccount(esql, MessengerUser.current.name);
                 break;
-            case 3: //delete message
+            case 5: //delete message
                 ret = Messenger.DeleteMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]));
                 break;
-            case 4: //edit
+            case 6: //edit
                 ret = Messenger.UpdateMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]), safeString(command[2]));
                 break;
-            case 5: //help
+            case 7: //help
                 help();
                 break;
-            case 6://invite
+            case 8://invite
                 ret = Messenger.AddToChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
-            case 7://leave
+            case 9://leave
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, MessengerUser.current.name);
                 Messenger_GUI.gui.disableActiveChat();
                 break;
-            case 8://remove
+            case 10://remove
                 ret = Messenger.DelFromContacts(esql, MessengerUser.current.name, command[1]);
                 if(command[1].equals(MessengerUser.current.name)) {
                     Messenger_GUI.gui.disableActiveChat();
                 }
+            case 11://status
+                if(command[1].equals("Online") || command[1].equals("Offline")) {
+                    chatArea.systemMessage("\"" + command[1] + "\" is reserved.  Please choose a different status");
+                    break;
+                }
+                ret = Messenger.UpdateStatus(esql,MessengerUser.current.name, safeString(command[1]));
                 break;
-            case 9://unblock
+            case 12://unblock
                 ret = Messenger.DelFromBlocks(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 10://uninvite
+            case 13://uninvite
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
-            case 11://whisper
+            case 14://whisper
                 String safeText = safeString(command[2]);
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
@@ -112,9 +126,8 @@ class ChatBarResponder implements ActionListener, KeyListener {
             default:;
             }
             if(ret != null)
-                System.out.println(ret);
+                chatArea.systemMessage(ret);
                 
-            System.out.println("COMMAND DONE!");
             
             return;
         }
@@ -151,6 +164,20 @@ class ChatBarResponder implements ActionListener, KeyListener {
         for(Command c : commands)
             chatArea.systemMessage("    " + c.desc);
         chatArea.systemMessage("    Press [TAB] to auto-complete commands or command arguments");
+    }
+    
+    public void listContacts() {
+        chatArea.systemMessage("Contacts:");
+        for(MessengerUser contact : MessengerUser.current.contacts)
+            chatArea.systemMessage("----" + contact.name);
+        chatArea.systemMessage("------------");
+    }
+    
+    public void listBlocked() {
+        chatArea.systemMessage("Blocked:");
+        for(MessengerUser block : MessengerUser.current.blocked)
+            chatArea.systemMessage("----" + block.name);
+        chatArea.systemMessage("------------");
     }
     
     public void keyPressed(KeyEvent e) {

@@ -22,12 +22,14 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     
     JPanel rightPanel, mainPanel;
     JMenuBar menuBar;
-    JList usersList;
+    JList usersList, chatsList;
     JLabel loginError, signUpError;
     
     JFormattedTextField phoneLine;
     JTextField loginUser, signUpUser;
     JPasswordField loginPass, signUpPass;
+    
+    JScrollPane scrollArea;
     
     ChatPane chatArea;
     
@@ -191,7 +193,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
     private JPanel createHelpPanel() {
         JPanel helpPanel = new JPanel();
         helpPanel.setLayout(new BoxLayout(helpPanel, BoxLayout.PAGE_AXIS));
-        helpPanel.add(new JLabel("Help :3"));
+        helpPanel.add(new JLabel("Type /help for a list of commands once you log in"));
         return helpPanel;
     }
     
@@ -256,7 +258,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         chatArea = new ChatPane();
         chatArea.setEditable(false);
-        JScrollPane scrollArea = new JScrollPane(chatArea);
+        scrollArea = new JScrollPane(chatArea);
         leftPanel.add(scrollArea);
         
         ChatBarResponder responder = new ChatBarResponder(chatArea);
@@ -286,7 +288,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         usersList.setPreferredSize(new Dimension(1000,1618));
         
         chatsModel = new DefaultListModel<String>();
-        JList chatsList = new JList<String>(chatsModel);
+        chatsList = new JList<String>(chatsModel);
         chatsList.addMouseListener(new ChatListListener());
         chatsList.setPreferredSize(new Dimension(1000,1000));
         
@@ -445,6 +447,43 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             
             //JButton button = (JButton)source;
             //menu.show(button, 0, button.getBounds().height);
+        }
+        
+        else if(action.equals("notifications")) {
+            final Collection<Notification> notifications = Notification.getNotifications();
+            final MessengerUser user = MessengerUser.current;
+            if(notifications.size() == 0)
+                return;
+            
+            final JPopupMenu menu = new JPopupMenu();
+            
+            ActionListener al = (new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    String[] ids = e.getActionCommand().split(",");
+                    int cid = Integer.parseInt(ids[0]);
+                    System.out.println("Marking Read: " + user.name + ", " + ids[1]);
+                    String ret = Messenger.MarkReadNotifications(esql, user.name, e.getActionCommand());
+                    if(ret != null) {
+                        //if(Pattern.matches("Error:.*", ret)) {
+                        //    System.out.println(ret);
+                        //}
+                        System.out.println("Marked Read: " + ret);
+                    }
+                    menu.remove(menu.getComponentIndex((JButton)e.getSource()));
+                    
+                    setActiveChat(cid);
+                }
+            });
+            
+            
+            for(Notification n : notifications) {
+                JButton button = new JButton(n.user + " posted/modified [" + n.mid + "] in chat (" + n.cid + ")");
+                button.addActionListener(al);
+                button.setActionCommand("" + n.cid + "," + n.mid);
+                menu.add(button);
+            }
+            JButton button = (JButton)source;
+            menu.show(button, 0, button.getBounds().height);
         }
         
     }
@@ -680,17 +719,28 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             System.out.println(query);
             
             System.out.println("Notification: ." + query+".");
+            Notification.clear();
+            
             if(query.equals("")) {
                 notifButton.setIcon(inactiveIcon);
-                
-            } else {
-                notifButton.setIcon(activeIcon);
+                return;
             }
+            else
+                notifButton.setIcon(activeIcon);
+                
+            System.out.println(query);
             
             String[] notifications = query.split("\\|\\[\\(\\^\\#\\^\\)\\]\\|");
             
             for(String notification : notifications) {
                 String[] components = notification.split("\\\\n");
+                int mid = Integer.parseInt(components[0]);
+                Notification n = Notification.getNotification(mid);
+                n.mid = mid;
+                n.cid = Integer.parseInt(components[1]);
+                n.user = components[2];
+                n.timestamp = components[3];
+                
             }
         }
         
@@ -841,6 +891,13 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         
         protected void processQuery(String[] query) {
             
+            JScrollBar vertical = scrollArea.getVerticalScrollBar();
+            
+            int pos = -1;
+            
+            if(vertical != null)
+                pos = vertical.getValue();
+            
             for(String s : query){
                 String[] components = s.split("\n",6);
                 int mid = Integer.parseInt(components[0]);
@@ -857,6 +914,10 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 System.out.println(s);
             }
             
+            vertical = scrollArea.getVerticalScrollBar();
+            if(vertical != null)
+                vertical.setValue(0);
+            
             wait = false;
         }
     }
@@ -869,10 +930,12 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 setActiveChat(Integer.parseInt(chatsModel.get(index)));
             }
         }
+    }
+    
+    void setActiveChat(int cid) {
+        Chat.activeChat = Chat.getChat(cid);
+        chatArea.setStyledDocument(Chat.activeChat.doc);
         
-        void setActiveChat(int cid) {
-            Chat.activeChat = Chat.getChat(cid);
-            chatArea.setStyledDocument(Chat.activeChat.doc);
-        }
+        chatsList.setSelectedIndex(chatsModel.indexOf(Integer.toString(cid)));
     }
 }
