@@ -567,6 +567,7 @@ else
 		
 		if num_rows = 0 then -- if2
 			-- is not the owner
+			delete from notification where lower(usr_login) = lower(v_LoginA) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 			delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
 			
 		else -- if2
@@ -578,12 +579,14 @@ else
 				delete from chat where chat_id = v_ChatID;
 			elsif tmp2 is null then -- if3
 				-- chat is not empty. chat member does not exist in usr. Chat is broken.
+				delete from notification where msg_id in (select msg_id from message where chat_id = v_ChatID);
 				delete from chat_list where chat_id = v_ChatID;
 				delete from chat where chat_id = v_ChatID;
 				return 'Error: Chat is broken. Removed chat and its members.';
 			else
 				-- chat is not empty. assign new owner.
 				update chat set init_sender = tmp1 where chat_id = v_ChatID;
+				delete from notification where lower(usr_login) = lower(v_LoginA) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 				delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginA);
 			end if; -- if3
 		
@@ -596,6 +599,7 @@ else
 			return 'Error: User needs to be owner of chat.';
 		end if; -- if4
 
+		delete from notification where lower(usr_login) = lower(v_LoginB) and msg_id in (select msg_id from message where chat_id = v_ChatID);
 		delete from chat_list where chat_id = v_ChatID and lower(member) = lower(v_LoginB);
 
 	end if; -- if1
