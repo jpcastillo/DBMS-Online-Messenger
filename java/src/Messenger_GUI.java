@@ -328,9 +328,9 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
         JMenu chatMenu = new JMenu("Chat");
         JMenu mesgMenu = new JMenu("Message");
         
-        menuBar.add(userMenu);
-        menuBar.add(chatMenu);
-        menuBar.add(mesgMenu);
+        //menuBar.add(userMenu);
+        //menuBar.add(chatMenu);
+        //menuBar.add(mesgMenu);
         
         menuBar.add(Box.createHorizontalGlue());
         
