@@ -405,6 +405,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 signUpError.setText("Username is Empty!");
                 return;
             }
+            String user = signUpUser.getText();
             String password = new String(signUpPass.getPassword());
             
             if(!phoneLine.isEditValid()) {
@@ -417,7 +418,7 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
             System.out.println(password);
             System.out.println(phoneLine.getText());
             System.out.println("Online");
-            String ret = Messenger.CreateUser(esql,signUpUser.getText(), password, phoneLine.getText(), "Online");
+            String ret = Messenger.CreateUser(esql,user, password, phoneLine.getText(), "Offline");
             
             if(ret == null)
                 signUpError.setText("Sign Up Error");
@@ -426,7 +427,11 @@ public class Messenger_GUI extends WindowAdapter implements ActionListener{
                 
             if(ret.equals("")) {
                 clearSignUp();
-                tryLogin(signUpUser.getText(), password);
+                //try {
+                //    Thread.sleep(1000);
+                //} catch (Exception interrupted) {}
+                System.out.println("\"" + signUpUser.getText() + "\", \"" + password + '"');
+                tryLogin(user, password);
             } else
                 System.out.println("Sign Up Error: " + ret + "|");
                 

@@ -25,7 +25,6 @@ import java.util.*;
 /**
 * This class defines a simple embedded SQL utility class that is designed to
 * work with PostgreSQL JDBC drivers.
-*
 */
 public class Messenger {
 
@@ -52,7 +51,7 @@ public class Messenger {
 		System.out.print("Connecting to database...");
 		try {
 			// constructs the connection URL
-			String url = "jdbc:postgresql://localhost:" + dbport + "/" + dbname;
+			String url = "jdbc:postgresql://jpc.mine.nu:" + dbport + "/" + dbname;
 			System.out.println ("Connection URL: " + url + "\n");
 
 			// obtain a physical connection
@@ -64,67 +63,6 @@ public class Messenger {
 			System.exit(-1);
 		}//end catch
 	}//end Messenger
-
-	/**
-	* Method to execute an update SQL statement.  Update SQL instructions
-	* includes CREATE, INSERT, UPDATE, DELETE, and DROP.
-	*
-	* @param sql the input SQL string
-	* @throws java.sql.SQLException when update failed
-	*/
-	/*public void executeUpdate (String sql) throws SQLException {
-	  // creates a statement object
-	  Statement stmt = this._connection.createStatement();
-
-	  // issues the update instruction
-	  stmt.executeUpdate (sql);
-
-	  // close the instruction
-	  stmt.close ();
-	}//end executeUpdate*/
-
-	/**
-	* Method to execute an input query SQL instruction (i.e. SELECT).  This
-	* method issues the query to the DBMS and outputs the results to
-	* standard out.
-	*
-	* @param query the input query string
-	* @return the number of rows returned
-	* @throws java.sql.SQLException when failed to execute the query
-	*/
-	public int executeQueryAndPrintResult (String query) throws SQLException {
-	  // creates a statement object
-	  Statement stmt = this._connection.createStatement ();
-
-	  // issues the query instruction
-	  ResultSet rs = stmt.executeQuery (query);
-
-	  /*
-	   ** obtains the metadata object for the returned result set. The metadata
-	   ** contains row and column info.
-	   */
-	  ResultSetMetaData rsmd = rs.getMetaData ();
-	  int numCol = rsmd.getColumnCount ();
-	  int rowCount = 0;
-
-	  // iterates through the result set and output them to standard out.
-	  boolean outputHeader = true;
-	  while (rs.next()){
-	 if(outputHeader){
-		for(int i = 1; i <= numCol; i++){
-		System.out.print(rsmd.getColumnName(i) + "\t");
-		}
-		System.out.println();
-		outputHeader = false;
-	 }
-		 for (int i=1; i<=numCol; ++i)
-			System.out.print (rs.getString (i) + "\t");
-		 System.out.println ();
-		 ++rowCount;
-	  }//end while
-	  stmt.close ();
-	  return rowCount;
-	}//end executeQuery
 
 	/*
 		Method to return as an Array the results of a query.
@@ -153,7 +91,7 @@ public class Messenger {
 			}
 			// remove the extra delimiter at the end
 			tmp = tmp.substring(0,tmp.length()-1);
-			// add this csv string to our return list
+			// add this string to our return list
 			ret_list.add(tmp);
 			tmp = "";
 		}//end while
@@ -374,7 +312,10 @@ public class Messenger {
 	}//end
 
 	/*
-		Returns a comma delimited list of chat members
+		Returns a new line delimited list of chat members. each chat member is then
+		delimited.
+		example:
+		Geo_Barton\naut voluptas aperiam|[(^#^)]|Levi.Murray\nvoluptatem fugiat et
 		for the specified chat id.
 	*/
 	public static String ListChatMembers(Messenger esql, int chatID) {
@@ -474,7 +415,7 @@ public class Messenger {
 		}
 		catch(SQLException e) {
 			//return e.getMessage();
-			System.out.println("E: "+e.getMessage());
+			//System.out.println("E: "+e.getMessage());
 			return null;
 		}
 	}//end
@@ -489,11 +430,9 @@ public class Messenger {
 			String query = String.format("select readNotifications('%s') as retVal;", un);
 			String retVal = esql.executeQueryStr(query);
 
-            
 			return retVal;
 		}
 		catch(Exception e) {
-		    
 			//return e.getMessage();
 			return null;
 		}
@@ -576,6 +515,40 @@ public class Messenger {
 	public static String RemoveExpired(Messenger esql) {
 		try {
 			String query = "select selfDestruct() as retVal;";
+			String retVal = esql.executeQueryStr(query);
+
+			return retVal;
+		}
+		catch(Exception e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+
+	/*
+		Returns a count of messages in a specified chat (String).
+		Input: chatID
+	*/
+	public static String GetChatMessageCount(Messenger esql, int chatID) {
+		try {
+			String query = String.format("select count(*) from message where chat_id=%d;",chatID);
+			
+			return esql.executeQueryStr(query);
+			//return Integer.parseInt(retVal);
+		}
+		catch(SQLException e) {
+			//return e.getMessage();
+			return null;
+		}
+	}//end
+
+	/*
+		INPUT: SenderLogin, MessageID, MediaType, URL
+	*/
+	public static String NewAttachment(Messenger esql, String un, int msgId, String mediaType, String url) {
+		try {
+			String query = String.format("select newAttachment('%s',%d,'%s','%s') as retVal;", un, msgId, mediaType, url);
 			String retVal = esql.executeQueryStr(query);
 
 			return retVal;

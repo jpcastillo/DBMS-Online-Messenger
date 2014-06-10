@@ -18,12 +18,13 @@ class ChatBarResponder implements ActionListener, KeyListener {
     }
 
     public Command[] commands = {new Command("/add", 2, "a", "/add <user> - add user to your contacts"),
+                               new Command("/attach", 4, "??m", "/attach <type (10 characters)> <url> <msg_id>"),
                                new Command("/block", 2, "x", "/block <user> - add user to your blocked list"),
                                new Command("/blocked", 1, "", "/blocked - list your blocked users"),
                                new Command("/contacts", 1, "", "/contacts - list your contacts"),
                                new Command("/delete-account", 1, "", "/delete-account - delete your account"),
                                new Command("/delete-message", 2, "m", "/delete-message <mid> - delete chosen message" ),
-                               new Command("/edit", 3, "mt", "/message <mid> <new text> - modify chosen message" ),
+                               new Command("/edit", 3, "mt", "/message <msg_id> <new text> - modify chosen message" ),
                                new Command("/help", 1, "", "/help - list all commands"),
                                new Command("/invite", 2, "c", "/invite <user> - invite user to active chat (owner only)"),
                                new Command("/leave", 1, "", "/leave - leaves the active chat"),
@@ -72,53 +73,78 @@ class ChatBarResponder implements ActionListener, KeyListener {
             case 0: //add
                 ret = Messenger.AddToContact(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 1: //block
+            case 1: //attach
+                ret = Messenger.NewAttachment(esql, MessengerUser.current.name, Integer.parseInt(command[3]), command[1], command[2]);
+                break;
+            case 2: //block
                 ret = Messenger.AddToBlock(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 2: //blocked
+            case 3: //blocked
                 listBlocked();
                 break;
-            case 3: //contacts
+            case 4: //contacts
                 listContacts();
                 break;
-            case 4: //delete-account
+            case 5: //delete-account
                 ret = Messenger.DeleteAccount(esql, MessengerUser.current.name);
                 break;
-            case 5: //delete message
+            case 6: //delete message
                 ret = Messenger.DeleteMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]));
                 break;
-            case 6: //edit
+            case 7: //edit
                 ret = Messenger.UpdateMessage(esql, MessengerUser.current.name, Integer.parseInt(command[1]), safeString(command[2]));
                 break;
-            case 7: //help
+            case 8: //help
                 help();
                 break;
-            case 8://invite
+            case 9://invite
                 ret = Messenger.AddToChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
+                if(Pattern.matches("Error:.*",ret)) {
+                    break;
+                } else {
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String safeText = safeString("[\"" + command[1] + "\" has been invited to the chat]");
+                    Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
+                    String timestamp = format.format(selfdestruct);
+                    System.out.println(timestamp);
+                    ret = Messenger.NewMessage(esql, safeText, timestamp, MessengerUser.current.name, Chat.activeChat.cid, "");
+                }
                 break;
-            case 9://leave
+            case 10://leave
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, MessengerUser.current.name);
                 Messenger_GUI.gui.disableActiveChat();
                 break;
-            case 10://remove
+            case 11://remove
                 ret = Messenger.DelFromContacts(esql, MessengerUser.current.name, command[1]);
+                if(Pattern.matches("Error:.*",ret)) {
+                    break;
+                } else {
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String safeText = safeString("[\"" + command[1] + "\" has been removed to the chat]");
+                    Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
+                    String timestamp = format.format(selfdestruct);
+                    System.out.println(timestamp);
+                    ret = Messenger.NewMessage(esql, safeText, timestamp, MessengerUser.current.name, Chat.activeChat.cid, "");
+                }
+                
                 if(command[1].equals(MessengerUser.current.name)) {
                     Messenger_GUI.gui.disableActiveChat();
                 }
-            case 11://status
+                break;
+            case 12://status
                 if(command[1].equals("Online") || command[1].equals("Offline")) {
-                    chatArea.systemMessage("\"" + command[1] + "\" is reserved.  Please choose a different status");
+                    chatArea.systemMessage("Error: \"" + command[1] + "\" is reserved.  Please choose a different status");
                     break;
                 }
                 ret = Messenger.UpdateStatus(esql,MessengerUser.current.name, safeString(command[1]));
                 break;
-            case 12://unblock
+            case 13://unblock
                 ret = Messenger.DelFromBlocks(esql, MessengerUser.current.name, command[1]);
                 break;
-            case 13://uninvite
+            case 14://uninvite
                 ret = Messenger.RemoveFromChat(esql, Chat.activeChat.cid, MessengerUser.current.name, command[1]);
                 break;
-            case 14://whisper
+            case 15://whisper
                 String safeText = safeString(command[2]);
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 Date selfdestruct = new Date(new Date().getTime() + 1000l * 60l); //
@@ -128,7 +154,7 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 break;
             default:;
             }
-            if(ret != null)
+            if(ret != null && !ret.equals(""))
                 chatArea.systemMessage(ret);
                 
             
@@ -231,26 +257,34 @@ class ChatBarResponder implements ActionListener, KeyListener {
                 else
                     names = Chat.activeChat.userNames();
                 
+                String partial = "";
+                
+                int pos = array.length - 1;
+                
+                for(int i = 0; i < pos; ++i)
+                    partial += array[i] + ' ';
+                
                 switch(c.argt.charAt(array.length-2))
                 {
                 case 'm':
-                    source.setText(array[0] + ' ' + bestMatch(array[1], Message.getIds()));
+                    
+                    source.setText(partial + bestMatch(array[pos], Message.getIds()));
                     break;
                 case 't':
-                    source.setText(array[0] + ' ' + array[1] + ' ' + Message.getMessage(Integer.parseInt(array[1])).text);
+                    source.setText(partial + Message.getMessage(Integer.parseInt(array[pos])).text);
                     break;
                 case 'c':
-                    System.out.println("Options: " + MessengerUser.current.contacts.length);
-                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts));
+                    //System.out.println("Options: " + MessengerUser.current.contacts.length);
+                    source.setText(partial + bestMatch(array[pos],MessengerUser.current.contacts));
                     break;
                 case 'a':
-                    source.setText(array[0] + ' ' + bestMatch(array[1],names));
+                    source.setText(partial + bestMatch(array[pos],names));
                     break;
                 case 'x':
-                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.contacts,names));
+                    source.setText(partial + bestMatch(array[pos],MessengerUser.current.contacts,names));
                     break;
                 case 'b':
-                    source.setText(array[0] + ' ' + bestMatch(array[1],MessengerUser.current.blocked));
+                    source.setText(partial + bestMatch(array[pos],MessengerUser.current.blocked));
                 default:;
                 }
             }
@@ -363,12 +397,14 @@ class ChatBarResponder implements ActionListener, KeyListener {
         char curr;
         
         while(true) {
+            if(strings[0].length() == longest)
+                return strings[0];
             curr = strings[0].charAt(longest);
             for(String s: strings) {
-                if(longest >= s.length() || s.charAt(longest) != curr){
+                if(longest == s.length() || s.charAt(longest) != curr){
                     //System.out.println("DONE AT: " + longest);
                     return s.substring(0,longest);
-                    }
+                }
             }
             ++longest;
         }

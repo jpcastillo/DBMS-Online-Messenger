@@ -9,7 +9,7 @@ $(main).class: $(objects) $(main).java
 	cp *.class ../classes/
 	
 run: $(main).class
-	java -cp ../classes:/home/dan/Desktop/CS166/DBMS-Online-Messenger/java/lib/pg73jdbc3.jar $(main) $(DB_NAME) $(PGPORT) $(USER) ''
+	java -cp ../classes:/home/dan/Desktop/CS166/DBMS-Online-Messenger/java/lib/pg73jdbc3.jar $(main) $(DB_NAME) $(PGPORT) postgres ''
 
 %.class: %.java
 	javac $(flags) $<

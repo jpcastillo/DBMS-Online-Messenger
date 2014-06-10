@@ -75,6 +75,11 @@ class Chat {
         try {
             doc.insertString(doc.getLength(), ": " + msg.text, ChatPane.message);
         } catch(Exception e) { System.out.println(e); }
+        
+        if(!msg.media_type.equals("") && !msg.media_url.equals(""))
+            try {
+                doc.insertString(doc.getLength(), " [" + msg.media_type + "]: " + msg.media_url, ChatPane.m_id);
+            } catch(Exception e) { System.out.println(e); }
     }
     
     public void updateMessage(int mid) {
