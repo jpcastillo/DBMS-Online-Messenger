@@ -667,7 +667,10 @@ declare ts timestamp;
 begin
 	ts := to_timestamp(now(),'YYYY-MM-DD HH:MI:SS');
 	-- Messages with a self-destruction timestamp should be deleted from the system, after specified datetime and once it is read
+	delete from media_attachment where msg_id in (select msg_id from message where destr_timestamp < ts and msg_id not in (select msg_id from notification));
+
 	delete from message where destr_timestamp < ts and msg_id not in (select msg_id from notification);
+   
    return '';
 end;
 $$ language plpgsql volatile;

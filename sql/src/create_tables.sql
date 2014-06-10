@@ -57,7 +57,7 @@ CREATE TABLE MESSAGE(
 
 CREATE TABLE MEDIA_ATTACHMENT(
 	media_id serial, 
-	media_type char(10), 
+	media_type char(10),
 	URL char(256) NOT NULL,
 	msg_id integer, 
 	PRIMARY KEY(media_id), 
