@@ -362,7 +362,7 @@ end if;
 
 select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
 if num_rows = 0 then
-	return 'Error: Invalid target login.';
+	return 'Error: Invalid target login ('||v_LoginB||').';
 end if;
 
 
@@ -405,12 +405,12 @@ begin
 
 select into bl_id,cl_id block_list,contact_list from usr where lower(login) = lower(v_LoginA);
 if bl_id is null or cl_id is null then
-	return 'Error: Invalid subject login (A).';
+	return 'Error: Invalid subject login (' ||v_LoginA||').';
 end if;
 
 select into num_rows count(*) from usr where lower(login) = lower(v_LoginB);
 if num_rows = 0 then
-	return 'Error: Invalid target login (B).';
+	return 'Error: Invalid target login (' ||v_LoginB||').';
 end if;
 
 if v_Control > 0 then
