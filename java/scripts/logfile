@@ -1,0 +1,76 @@
+LOG:  database system was shut down at 2014-05-30 22:25:03 PDT
+LOG:  checkpoint record is at 0/13BEF578
+LOG:  redo record is at 0/13BEF578; undo record is at 0/0; shutdown TRUE
+LOG:  next transaction ID: 908; next OID: 16610
+LOG:  next MultiXactId: 1; next MultiXactOffset: 0
+LOG:  database system is ready
+LOG:  transaction ID wrap limit is 2147484146, limited by database "postgres"
+ERROR:  language "plpgsql" already exists
+ERROR:  syntax error at or near "declare" at character 338
+ERROR:  syntax error at or near "select" at character 7
+ERROR:  syntax error at or near "return" at character 1
+WARNING:  there is no transaction in progress
+ERROR:  syntax error at or near "$$ language plpgsql volatile;
+	
+	
+	;
+	
+	
+	end;
+	end;\q
+	\q
+	$
+	$$" at character 1
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  subquery must return only one column
+ERROR:  could not find array type for datatype record
+ERROR:  could not find array type for data type record
+ERROR:  could not find array type for data type record
+ERROR:  cannot cast type record to text
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  cannot cast type record to chat_list
+DETAIL:  Cannot cast type chat_list to integer in column 1.
+ERROR:  cannot cast type record to chat_list
+DETAIL:  Cannot cast type chat_list to integer in column 1.
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  cannot cast type record to chat_list
+DETAIL:  Cannot cast type chat_list to integer in column 1.
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  subquery in FROM must have an alias
+HINT:  For example, FROM (SELECT ...) [AS] foo.
+ERROR:  column chat_list.chat_list does not exist
+ERROR:  column reference "chat_id" is ambiguous
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  syntax error at or near ")" at character 26
+ERROR:  column "current_users" does not exist
+ERROR:  language "plpgsql" already exists
+ERROR:  syntax error at or near "newMessage" at character 1
+ERROR:  invalid input syntax for type timestamp: ""
+CONTEXT:  PL/pgSQL function "newmessage" line 5 at block variables initialization
+ERROR:  invalid input syntax for type timestamp: ""
+CONTEXT:  PL/pgSQL function "newmessage" line 5 at block variables initialization
+ERROR:  language "plpgsql" already exists
+ERROR:  function newmessage("unknown", "unknown", "unknown", integer, "unknown") is not unique
+HINT:  Could not choose a best candidate function. You may need to add explicit type casts.
+ERROR:  syntax error at or near ";" at character 25
+ERROR:  invalid input syntax for type timestamp: ""
+CONTEXT:  PL/pgSQL function "newmessage" line 5 at block variables initialization
+ERROR:  language "plpgsql" already exists
+ERROR:  duplicate key violates unique constraint "notification_pkey"
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+ERROR:  language "plpgsql" already exists
+FATAL:  database "Torcherist" does not exist
