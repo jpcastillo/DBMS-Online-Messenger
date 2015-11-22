@@ -1,35 +1,83 @@
-DBMS-Online-Messenger
-====================
+# DBMS Online Messenger
 
-Instant Messenger in Java written for Database Management Systems course at UC Riverside.
+DBMS Online Messenger is an instant messenging service developed at the University of California, Riverside that was built and tested on Linux and OS X. The features and abilities of this instand messenger are listed below.
 
-This software was written and tested on Linux and OS X. Written using Java jdk-7u60. Jswing graphics library. This software includes the following features:
+  - Timed messages
+  - Edit sent messages
+  - Delete sent messages
+  - Tab-to-complete commands ("leave" or "join" a channel for example)
+  - Help menu displaying supported commands
+  - Channel messages persist on remote server
+  - PostgreSQL - stored procedures, indexes, foreign keys, primary keys, unique keys
+  - Create / delete channels
+  - Add friends to channels
+  - Kick enemies from channels
+  - Friends list (Add to and remove from)
+  - Block list (Add to and remove from)
+  - Hand over ownership of channel to another
+  - Message statuses such as Read and Unread
+  - Graphical User Interface (GUI)
+  - Message notifications (Alerts visible in GUI)
 
-1. Timed messages
+** It is important to note that in the above list a "channel" is what is commonly known as a "chat room." This software uses the term "channel" instead.
 
-2. Edit sent messages
+### Version
+1.0.0
 
-3. Delete sent messages
+### Tech
 
-4. Tab-to-complete commands (leave or join a channel for example)
+DBMS Online Messenger utilizes a number of languages and open-source tools:
 
-5. Help menu displaying supported commands
+* **Java 7** - used to program the user interface and communicate with remote server
+* **Java Swing** - graphics library used for the GUI
+* **PostgreSQL 8** - database management system to store and manipulate data
+* **BASH** - scripting for database initialization/performance metrics and software execution
+* **Makefile** - compilation rules
 
-6. Conversations persist on central server
+### Installation
 
-7. PostgreSQL - stored procedures, indexes, foreign keys, primary keys, unique keys
+You need to have an instance of PostgreSQL running and reachable. After this is accomplished we may initialize our database and load some test data sets. We must navigate to our scripts directory:
 
-8. Add friends to channels
+```sh
+$ cd <path_to_code_dir>/sql/scripts
+```
 
-9. Kick enemies from channels
+Now we can run our BASH script to build our database for us:
 
-10. Hand over ownership of channel to another
+```sh
+$ ./create_db.sh
+```
 
-11. Message statuses such as Read and Unread
+It is important to note that this script makes use of some environment variables. These two variables must be named **PGPORT** and **DB_NAME**. To test the performance of the database against some test case queries with and without optimizations we can run the following script from the same directory.
 
-12. Message notifications (Alerts visible in GUI)
+```sh
+$ ./measure.sh
+```
+Note that this script also makes use of those two variables mentioned above.
 
+Moving on. Let's setup the GUI. We must first tell the Messenger what remote host to attempt connection with. This is done in Messenger.java. We must change this hostname "jpc.mine.nu" to whatever hostname or IP address you will be using:
 
-To build and run the program, go to the java/src. type "make run"
+```sh
+$ cd <path_to_code_dir>/java/src
+$ sed -i 's/jpc.mine.nu/<new_hostname>/g' Messenger.java
+```
+Now We must compile the source code. Make sure we navigated to the Makefile directory:
 
-Developed John Castillo and Daniel Pasillas
+```sh
+$ cd <path_to_code_dir>/java/src
+```
+And now we run make to compile DBMS Online Messenger. You should note that before GUI launch there is a check for PostgreSQL server connectivity and will not launch if this is not available.
+
+```sh
+$ make run
+```
+Note: The database name and PostgreSQL port are assigned as variables within the Makefile. Feel free to change these values as needed.
+
+### Development
+
+This project was developed by John Castillo and Daniel Pasillas.
+
+License
+----
+
+MIT
