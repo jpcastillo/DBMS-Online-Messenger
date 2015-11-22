@@ -25,7 +25,11 @@ This software was written and tested on Linux and OS X. Written using Java jdk-7
 
 10. Hand over ownership of channel to another
 
+11. Message statuses such as Read and Unread
+
+12. Message notifications (Alerts visible in GUI)
+
 
 To build and run the program, go to the java/src. type "make run"
 
-by John Castillo and Daniel Pasillas
+Developed John Castillo and Daniel Pasillas
