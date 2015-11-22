@@ -71,7 +71,7 @@ And now we run make to compile DBMS Online Messenger. You should note that befor
 ```sh
 $ make run
 ```
-Note: The database name and PostgreSQL port are assigned as variables within the Makefile. Feel free to change these values as needed.
+Note: The database name and PostgreSQL port are assigned as variables within the Makefile. It expects database to sucesfully validate user **postgres** with empty password. Feel free to change these values as needed.
 
 ### Development
 
