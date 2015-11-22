@@ -4,6 +4,9 @@ objects = $(sources:.java=.class)
 #$(sources:.java=.class:./=../classes/)
 flags = -cp .:../lib/pg73jdbc3.jar
 
+DB_NAME = mydb
+PGPORT = 4956
+
 $(main).class: $(objects) $(main).java
 	javac $(flags) $(main).java
 	mv *.class ../classes/
