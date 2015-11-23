@@ -22,10 +22,9 @@ DBMS Online Messenger is an instant messenging service developed at the Universi
 ** It is important to note that in the above list a "channel" is what is commonly known as a "chat room." This software uses the term "channel" instead.
 
 ### Demonstration
-`YoutTube` [YouTube](https://youtu.be/GF6R70yiEfE)
+`YouTube` [YouTube](https://youtu.be/GF6R70yiEfE)
 
 ![Demo GIF](https://raw.github.com/jpcastillo/DBMS-Online-Messenger/master/demo.gif)
-
 
 ### Version
 1.0.0
@@ -67,7 +66,7 @@ Moving on. Let's setup the GUI. We must first tell the Messenger what remote hos
 $ cd <path_to_code_dir>/java/src
 $ sed -i 's/jpc.mine.nu/<new_hostname>/g' Messenger.java
 ```
-Now We must compile the source code. Make sure we navigated to the Makefile directory:
+Now we must compile the source code. Make sure we navigated to the Makefile directory:
 
 ```sh
 $ cd <path_to_code_dir>/java/src
